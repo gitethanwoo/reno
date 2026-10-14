@@ -160,6 +160,9 @@ export function addDays(date: string, days: number) {
 }
 export const quoteTotal = (items: { cents: number }[]) =>
   items.reduce((sum, item) => sum + item.cents, 0);
+/** The deposit on a quote total at a whole percent, rounded to the cent. */
+export const depositFor = (cents: number, percent: number) =>
+  Math.round((cents * percent) / 100);
 export function validDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
