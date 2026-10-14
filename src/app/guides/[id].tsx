@@ -6,7 +6,6 @@ import {
   Button,
   Copy,
   Empty,
-  ErrorNote,
   Eyebrow,
   Heading,
   Screen,
@@ -19,7 +18,7 @@ export default function Guide() {
   const guide = guides.find((g) => g.id === id);
   if (!guide)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty
           title="Guide not found."
           text="Visit Guides for the latest field notes."
@@ -28,6 +27,7 @@ export default function Guide() {
     );
   return (
     <Screen
+      error={task.error}
       footer={
         <Button
           title={
@@ -51,7 +51,6 @@ export default function Guide() {
           <Copy>{copy}</Copy>
         </View>
       ))}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

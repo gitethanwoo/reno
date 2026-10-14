@@ -52,9 +52,8 @@ export default function Terms() {
         />
       </Card>
       <Note>
-        An example of the planned AI review; reading your actual documents
-        isn’t connected yet. Findings are prompts to ask about, not legal
-        advice.
+        An example of the planned AI review; reading your actual documents isn’t
+        connected yet. Findings are prompts to ask about, not legal advice.
       </Note>
     </Screen>
   );

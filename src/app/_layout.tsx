@@ -1,6 +1,6 @@
 import { SessionProvider, useSessionMode } from "@/state/session";
 import { PaperProvider, MD3LightTheme } from "react-native-paper";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import {
@@ -12,7 +12,7 @@ import {
   DMSerifDisplay_400Regular,
   DMSerifDisplay_400Regular_Italic,
 } from "@expo-google-fonts/dm-serif-display";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { StoreProvider, useStore } from "@/state/store";
 import { Button, Copy } from "@/components/ui";
 import { NameStep } from "@/components/name-step";
@@ -20,6 +20,25 @@ import { colors, fonts } from "@/components/theme";
 import { PushObserver } from "@/lib/push";
 
 export { ErrorBoundary } from "expo-router";
+// Modal forms get Cancel on the left, like Mail and Calendar. Leaving with
+// unsaved input asks first (see lib/discard.ts).
+const modal = (title: string) => ({
+  title,
+  presentation: "modal" as const,
+  headerLeft: () => (
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={12}
+      onPress={() => router.back()}
+    >
+      <Text
+        style={{ fontFamily: fonts.regular, fontSize: 17, color: colors.ink }}
+      >
+        Cancel
+      </Text>
+    </Pressable>
+  ),
+});
 function Routes() {
   const { state, ready, loadError, reload } = useStore();
   const { preview } = useSessionMode();
@@ -58,10 +77,7 @@ function Routes() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="new-project"
-          options={{ title: "New project", presentation: "modal" }}
-        />
+        <Stack.Screen name="new-project" options={modal("New project")} />
         <Stack.Screen
           name="project/[id]/index"
           options={{ title: "Your project" }}
@@ -72,11 +88,11 @@ function Routes() {
         />
         <Stack.Screen
           name="project/[id]/payment"
-          options={{ title: "Log a payment", presentation: "modal" }}
+          options={modal("Log a payment")}
         />
         <Stack.Screen
           name="project/[id]/update"
-          options={{ title: "Project update", presentation: "modal" }}
+          options={modal("Project update")}
         />
         <Stack.Screen
           name="project/[id]/punch"
@@ -92,7 +108,7 @@ function Routes() {
         />
         <Stack.Screen
           name="project/[id]/propose"
-          options={{ title: "Propose a change", presentation: "modal" }}
+          options={modal("Propose a change")}
         />
         <Stack.Screen
           name="project/[id]/complete"
@@ -104,7 +120,7 @@ function Routes() {
         />
         <Stack.Screen
           name="project/[id]/quote"
-          options={{ title: "Send a quote", presentation: "modal" }}
+          options={modal("Send a quote")}
         />
         <Stack.Screen
           name="join/[token]"

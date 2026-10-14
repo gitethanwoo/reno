@@ -13,7 +13,6 @@ import {
   Copy,
   Divider,
   Empty,
-  ErrorNote,
   LineItem,
   Screen,
   Title,
@@ -27,7 +26,7 @@ export default function Complete() {
   const [confirmed, setConfirmed] = useState(false);
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
@@ -37,6 +36,7 @@ export default function Complete() {
   const ready = !open && !pending && remaining(p) === 0;
   return (
     <Screen
+      error={task.error}
       footer={
         complete ? (
           <View style={{ gap: 8 }}>
@@ -121,11 +121,10 @@ export default function Complete() {
       )}
       {!complete && (
         <Copy tone="muted" style={{ fontSize: 14 }}>
-          Completing the project locks the record. You can still view and
-          export it.
+          Completing the project locks the record. You can still view and export
+          it.
         </Copy>
       )}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

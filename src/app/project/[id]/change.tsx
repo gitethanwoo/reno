@@ -11,7 +11,6 @@ import {
   Copy,
   Divider,
   Empty,
-  ErrorNote,
   Heading,
   LineItem,
   Note,
@@ -25,7 +24,7 @@ export default function ChangeReview() {
   const c = p?.changes.find((c) => c.id === params.changeId) ?? p?.changes[0];
   if (!p || !c)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty
           title="No change to review."
           text="Proposals will appear in your project record."
@@ -55,6 +54,7 @@ export default function ChangeReview() {
   const pending = c.status === "pending";
   return (
     <Screen
+      error={task.error}
       footer={
         pending && role === "homeowner" ? (
           <View style={{ gap: 8 }}>
@@ -146,7 +146,6 @@ export default function ChangeReview() {
             ? "The new total and finish date are now part of the agreed project."
             : "Declined changes stay in the record. The agreed budget and schedule did not change."}
       </Note>
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

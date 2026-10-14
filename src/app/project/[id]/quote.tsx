@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDiscardGuard } from "@/lib/discard";
 import { DateField } from "@/components/date-field";
 import { today } from "@/lib/date";
 import { router } from "expo-router";
@@ -12,7 +13,6 @@ import {
   Card,
   Checkbox,
   Empty,
-  ErrorNote,
   Field,
   Heading,
   IconButton,
@@ -64,15 +64,25 @@ export default function SendQuote() {
     previous ? String(previous.durationDays) : "",
   );
   const [cleanup, setCleanup] = useState(previous?.cleanup ?? true);
+  const form = JSON.stringify({
+    company,
+    lines,
+    deposit,
+    start,
+    days,
+    cleanup,
+  });
+  const [initial] = useState(form);
+  const allowLeave = useDiscardGuard(form !== initial);
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
   if (role !== "contractor" || p.status !== "planning")
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty
           title={
             role !== "contractor"
@@ -124,12 +134,14 @@ export default function SendQuote() {
         items,
         at: new Date().toISOString(),
       });
+      allowLeave();
       router.back();
       void askForPush();
     });
   const live = quoteTotal(lines.map((l) => ({ cents: centsOf(l.amount) })));
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
         <Button
@@ -248,7 +260,6 @@ export default function SendQuote() {
         The homeowner sees every line. Once they accept, changes go through
         change requests.
       </Note>
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

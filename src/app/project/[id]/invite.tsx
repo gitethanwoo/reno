@@ -13,7 +13,6 @@ import {
   Check,
   Copy,
   Empty,
-  ErrorNote,
   Eyebrow,
   Note,
   Screen,
@@ -56,14 +55,14 @@ export default function Invite() {
   const [now] = useState(() => Date.now());
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
   const contractor = contractorOf(p);
   if (role !== "homeowner" || contractor)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty
           title={
             contractor
@@ -89,6 +88,7 @@ export default function Invite() {
     });
   return (
     <Screen
+      error={task.error}
       footer={
         <Button
           title={open ? "Share link again" : "Share invite link"}
@@ -160,7 +160,6 @@ export default function Invite() {
           stays on this device.
         </Note>
       )}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

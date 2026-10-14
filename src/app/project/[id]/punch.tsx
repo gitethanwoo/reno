@@ -8,7 +8,6 @@ import {
   Card,
   Copy,
   Empty,
-  ErrorNote,
   Eyebrow,
   Field,
   Heading,
@@ -27,7 +26,7 @@ export default function Punch() {
   const [id] = useState(uid);
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
@@ -47,6 +46,7 @@ export default function Punch() {
   if (!item)
     return (
       <Screen
+        error={task.error}
         keyboard
         footer={
           <Button
@@ -86,7 +86,6 @@ export default function Punch() {
           placeholder="Where is it? What should be different?"
           maxLength={1000}
         />
-        <ErrorNote error={task.error} />
       </Screen>
     );
   const homeowner = role === "homeowner",
@@ -97,7 +96,7 @@ export default function Punch() {
   const canSubmit = !homeowner && item.status === "open";
   const acting = !closed && (canReview || canReopen || canSubmit);
   return (
-    <Screen keyboard>
+    <Screen error={task.error} keyboard>
       <View style={{ gap: 10 }}>
         <Badge warm={item.status !== "resolved"}>
           {item.status === "review"
@@ -167,7 +166,6 @@ export default function Punch() {
             : "Waiting for the homeowner to review your fix. Only they can close the item."}
         </Note>
       )}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

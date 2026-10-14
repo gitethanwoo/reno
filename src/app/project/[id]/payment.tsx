@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDiscardGuard } from "@/lib/discard";
 import { DateField } from "@/components/date-field";
 import { today } from "@/lib/date";
 import { router } from "expo-router";
@@ -8,7 +9,6 @@ import { money, parseMoney, remaining } from "@/domain/model";
 import {
   Button,
   Empty,
-  ErrorNote,
   Chips,
   Field,
   Note,
@@ -24,14 +24,16 @@ export default function Payment() {
   const [method, setMethod] = useState("Bank transfer");
   const [note, setNote] = useState("");
   const [id] = useState(uid);
+  const allowLeave = useDiscardGuard(!!amount.trim() || !!note.trim());
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
         <Button
@@ -49,6 +51,7 @@ export default function Payment() {
                 note,
                 at: new Date().toISOString(),
               });
+              allowLeave();
               router.back();
             })
           }
@@ -91,7 +94,6 @@ export default function Payment() {
         This records a payment you already made. No money moves through Reno,
         and it isn’t proof the contractor received it.
       </Note>
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

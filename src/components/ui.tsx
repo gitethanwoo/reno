@@ -108,9 +108,12 @@ export function Screen({
   footer,
   keyboard = false,
   padded = true,
+  error = null,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** Shown next to the footer's buttons, where the person is looking when they tap. */
+  error?: string | null;
   keyboard?: boolean;
   padded?: boolean;
 }) {
@@ -137,6 +140,7 @@ export function Screen({
         }}
       >
         {children}
+        {!footer && <ErrorNote error={error} />}
       </ScrollView>
       {footer && (
         <View
@@ -148,7 +152,15 @@ export function Screen({
             borderTopWidth: 1,
           }}
         >
-          <View style={{ maxWidth: 612, width: "100%", alignSelf: "center" }}>
+          <View
+            style={{
+              maxWidth: 612,
+              width: "100%",
+              alignSelf: "center",
+              gap: 12,
+            }}
+          >
+            <ErrorNote error={error} />
             {footer}
           </View>
         </View>
@@ -427,10 +439,7 @@ export function LineItem({
       </Copy>
       <Copy
         tone={tone}
-        style={[
-          s.figure,
-          strong && { fontFamily: fonts.bold, fontSize: 18 },
-        ]}
+        style={[s.figure, strong && { fontFamily: fonts.bold, fontSize: 18 }]}
       >
         {value}
       </Copy>
@@ -451,7 +460,11 @@ export function Tabs<T extends string>({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      style={{
+        flexGrow: 0,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.line,
+      }}
       contentContainerStyle={{ gap: 22 }}
       accessibilityRole="tablist"
     >
@@ -568,7 +581,12 @@ export function Checkbox({
 export function Check({ done, children }: { done: boolean; children: string }) {
   return (
     <View
-      style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 40 }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        minHeight: 40,
+      }}
     >
       <View
         style={[

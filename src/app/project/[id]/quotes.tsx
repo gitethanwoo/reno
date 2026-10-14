@@ -11,7 +11,6 @@ import {
   Copy,
   Divider,
   Empty,
-  ErrorNote,
   Eyebrow,
   Heading,
   LineItem,
@@ -27,7 +26,7 @@ export default function Quotes() {
   const task = useTask();
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
@@ -57,6 +56,7 @@ export default function Quotes() {
   ];
   return (
     <Screen
+      error={task.error}
       footer={
         canAccept ? (
           <Button
@@ -217,7 +217,6 @@ export default function Quotes() {
               changes go through change requests.
             </Note>
           )}
-          <ErrorNote error={task.error} />
           {p.quote && (
             <Button
               title="Review the terms"

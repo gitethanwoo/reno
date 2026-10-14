@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   Copy,
-  ErrorNote,
   Eyebrow,
   Note,
   Screen,
@@ -41,7 +40,10 @@ export default function Join() {
 
   if (preview)
     return (
-      <Screen footer={<Button title="Go home" onPress={home} />}>
+      <Screen
+        error={task.error}
+        footer={<Button title="Go home" onPress={home} />}
+      >
         <Title sub="This link opens a project a homeowner shared with you.">
           Join a project
         </Title>
@@ -53,7 +55,7 @@ export default function Join() {
     );
   if (found === undefined)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Title>Join a project</Title>
         <Copy tone="muted">Checking your invite…</Copy>
       </Screen>
@@ -61,6 +63,7 @@ export default function Join() {
   if (!open)
     return (
       <Screen
+        error={task.error}
         footer={<Button title="Go home" variant="secondary" onPress={home} />}
       >
         <Title>Join a project</Title>
@@ -75,6 +78,7 @@ export default function Join() {
     );
   return (
     <Screen
+      error={task.error}
       footer={
         <Button
           title="Join as contractor"
@@ -108,7 +112,6 @@ export default function Join() {
           link works once and expires {expiry}.
         </Copy>
       </Card>
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }

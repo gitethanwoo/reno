@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDiscardGuard } from "@/lib/discard";
 import { router } from "expo-router";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
@@ -6,7 +7,6 @@ import { parseMoney } from "@/domain/model";
 import {
   Button,
   Empty,
-  ErrorNote,
   Field,
   Note,
   Title,
@@ -21,14 +21,18 @@ export default function Propose() {
   const [amount, setAmount] = useState("");
   const [days, setDays] = useState("0");
   const [id] = useState(uid);
+  const allowLeave = useDiscardGuard(
+    !!title.trim() || !!reason.trim() || !!amount.trim(),
+  );
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
         <Button
@@ -48,6 +52,7 @@ export default function Propose() {
                 days: Number(days),
                 at: new Date().toISOString(),
               });
+              allowLeave();
               router.back();
             })
           }
@@ -85,10 +90,7 @@ export default function Propose() {
         keyboardType="number-pad"
         maxLength={3}
       />
-      <Note>
-        Don’t start this work until the homeowner approves it.
-      </Note>
-      <ErrorNote error={task.error} />
+      <Note>Don’t start this work until the homeowner approves it.</Note>
     </Screen>
   );
 }

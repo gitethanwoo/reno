@@ -1,32 +1,29 @@
 import { useState } from "react";
+import { useDiscardGuard } from "@/lib/discard";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { Photo } from "@/domain/model";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
-import {
-  Button,
-  Empty,
-  ErrorNote,
-  Field,
-  Title,
-  Screen,
-  useTask,
-} from "@/components/ui";
+import { Button, Empty, Field, Title, Screen, useTask } from "@/components/ui";
 export default function Update() {
   const { project: p, commit, addPhoto, params } = useProject();
   const task = useTask();
   const [text, setText] = useState(params.text ?? "");
   const [photo, setPhoto] = useState<Photo>();
   const [id] = useState(uid);
+  const allowLeave = useDiscardGuard(
+    text.trim() !== (params.text ?? "").trim() || !!photo,
+  );
   if (!p)
     return (
-      <Screen>
+      <Screen error={task.error}>
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
         <Button
@@ -43,6 +40,7 @@ export default function Update() {
                 photo,
                 at: new Date().toISOString(),
               });
+              allowLeave();
               router.back();
             })
           }
@@ -78,7 +76,6 @@ export default function Update() {
           })
         }
       />
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }
