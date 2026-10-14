@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Stack, router } from "expo-router";
-import { ScrollView, TextInput, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useProject } from "@/features/use-project";
 import {
   Badge,
@@ -43,19 +43,24 @@ import { useInvite } from "@/features/use-invite";
 import { PunchComposer } from "@/components/punch-composer";
 import { ThreadComposer } from "@/components/thread-composer";
 import { ProjectThread, threadPhotos } from "@/components/project-thread";
+import { ActionMenu, MenuAction } from "@/components/action-menu";
 
 export default function ProjectDetail() {
   const { project: p, state, params, role, commit, addPhotos } = useProject();
   // The tab lives in the route so links (a push, "Ask a question") can open
   // the thread on a screen that is already mounted.
   const tab = params.tab ?? "overview";
-  const setTab = (next: string) => router.setParams({ tab: next });
+  const setTab = (next: string) => {
+    setFocusRequest(0);
+    router.setParams({ tab: next });
+  };
+  // Counts "Post an update" picks from the menu; each one focuses the composer.
+  const [focusRequest, setFocusRequest] = useState(0);
   const task = useTask();
   const photoTask = useTask();
   const [viewing, setViewing] = useState<number | null>(null);
   const [viewingThread, setViewingThread] = useState<number | null>(null);
   const scroll = useRef<ScrollView>(null);
-  const composer = useRef<TextInput>(null);
   // The thread keeps its newest message in view, like Messages, until the
   // person scrolls back through it.
   const stuck = useRef(false);
@@ -125,6 +130,72 @@ export default function ProjectDetail() {
           at: new Date().toISOString(),
         });
     });
+  const postUpdate = () => {
+    router.setParams({ tab: "record" });
+    setFocusRequest((n) => n + 1);
+  };
+  // The "+" menu gathers what this side can do right now; each entry follows
+  // the same rule as its button further down the screen.
+  const actions: MenuAction[] = [
+    ...(planning && !homeowner
+      ? [
+          {
+            title: latest ? "Revise quote" : "Write a quote",
+            icon: "file" as const,
+            onPress: () => go("quote"),
+          },
+        ]
+      : []),
+    ...(!homeowner && p.status === "active"
+      ? [
+          {
+            title: "Propose a change",
+            icon: "file" as const,
+            onPress: () => go("propose"),
+          },
+        ]
+      : []),
+    ...(!complete
+      ? [
+          {
+            title: "Post an update",
+            icon: "message" as const,
+            onPress: postUpdate,
+          },
+        ]
+      : []),
+    ...(homeowner && !complete
+      ? [
+          {
+            title: "Add a punch item",
+            icon: "tools" as const,
+            onPress: () => setTab("punch"),
+          },
+        ]
+      : []),
+    ...(homeowner && p.status === "active" && remaining(p) > 0
+      ? [
+          {
+            title: "Log a payment",
+            icon: "money" as const,
+            onPress: () => go("payment"),
+          },
+        ]
+      : []),
+    ...(!complete && photosLeft > 0
+      ? [
+          {
+            title: "Add photos",
+            icon: "camera" as const,
+            onPress: () => {
+              // The new photos show in the overview strip.
+              setTab("overview");
+              void addProjectPhotos();
+            },
+          },
+        ]
+      : []),
+  ];
   return (
     <Screen
       scrollRef={scroll}
@@ -142,10 +213,10 @@ export default function ProjectDetail() {
       footer={
         record && !complete ? (
           <ThreadComposer
-            ref={composer}
             projectId={p.id}
             initial={params.text}
             autoFocus={!!params.text}
+            focusRequest={focusRequest}
             onSent={() => {
               stuck.current = true;
             }}
@@ -153,7 +224,14 @@ export default function ProjectDetail() {
         ) : undefined
       }
     >
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen
+        options={{
+          title: "",
+          headerRight: actions.length
+            ? () => <ActionMenu label="Add to this project" actions={actions} />
+            : undefined,
+        }}
+      />
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <Badge>{statusLabel(p)}</Badge>

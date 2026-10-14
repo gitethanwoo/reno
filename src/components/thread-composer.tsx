@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { Image } from "expo-image";
 import { Photo } from "@/domain/model";
@@ -16,14 +16,15 @@ export function ThreadComposer({
   projectId,
   initial,
   autoFocus,
+  focusRequest,
   onSent,
-  ref,
 }: {
   projectId: string;
   initial?: string;
   autoFocus?: boolean;
+  /** Focuses the field each time it goes up (the "+" menu's "Post an update"). */
+  focusRequest?: number;
   onSent: () => void;
-  ref?: React.Ref<TextInput>;
 }) {
   const { commit, addPhotos } = useStore();
   const task = useTask();
@@ -31,6 +32,11 @@ export function ThreadComposer({
   const [text, setText] = useState(initial ?? "");
   const [photo, setPhoto] = useState<Photo>();
   // A new question from another screen replaces the draft.
+  const input = useRef<TextInput>(null);
+  // Keyboard focus lives outside React.
+  useEffect(() => {
+    if (focusRequest) input.current?.focus();
+  }, [focusRequest]);
   const [prefill, setPrefill] = useState(initial);
   if (initial !== prefill) {
     setPrefill(initial);
@@ -125,7 +131,7 @@ export function ThreadComposer({
           )}
         </Pressable>
         <TextInput
-          ref={ref}
+          ref={input}
           testID="thread-composer"
           accessibilityLabel="Message"
           placeholder="Write an update"
