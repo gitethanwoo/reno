@@ -1,56 +1,23 @@
-# Welcome to your Expo app 👋
+# Reno
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo SDK 57 / React Native app with React Native Paper, Expo Router, and a Convex backend. Source lives in `src/`; backend functions in `convex/`; the original visual direction is in `docs/design/`.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm install
+npm start                    # Metro
+npm run web                  # Browser sample notebook on port 8086
+npm run ios                  # Build and run the native iPhone simulator app
+npm run typecheck
+npm run lint
+npm test
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Linked projects: [Expo @athanir/reno](https://expo.dev/accounts/athanir/projects/reno) and Convex `ethan-8dbbd:reno` (development deployment `insightful-viper-971`). `.env.local` contains the development URLs and is ignored by Git.
 
-### Other setup steps
+[Install iPhone preview 0.1.0 (1)](https://expo.dev/accounts/athanir/projects/reno/builds/b25419b0-5fe0-4b14-ad04-ffbbfb8acc2c) from Safari on the registered iPhone. This signed ad hoc build runs without Metro. Additional phones must be registered and included in a new or re-signed build. Build with `npx eas-cli build --platform ios --profile preview`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Working: project drafts, project creation, sample quote comparison, change approvals, payment records, progress updates/photos, punch-list review, completion checks, saved guides, and text export. Sample mode stores its notebook locally; authenticated notebooks use private Convex records.
 
-## Learn more
+Passkeys use the official Convex Better Auth component, Better Auth's WebAuthn plugin, and an Expo native bridge. iOS bundle `com.athanir.reno` is associated with `insightful-viper-971.convex.site` under Athanir team `NSJPQ3TSBT`. The backend registration/sign-in protocol is verified; Face ID and passkey creation on a signed physical iPhone still need testing. The local browser exposes sample mode because it does not share the native relying-party domain.
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This is an initial development build. Contractor matching, invitations/shared projects, live quotes, AI document analysis, payment processing, and store submission are not implemented. Homeowner/contractor switching explores the two workflows within your own notebook; it is not multi-user contractor access. Payment actions only record payments made elsewhere.

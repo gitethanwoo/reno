@@ -1,0 +1,412 @@
+{
+  "brand": "Use case: ui-mockup. Create ONE highly polished mobile app screen for Reno, a homeowner-controlled home improvement app launching in St. Augustine. Output a single flat edge-to-edge portrait app screenshot with aspect ratio approximately 9:19.5, no device bezel, no external background, no perspective, no presentation board, no extra screens. Full status bar 9:41 and bottom safe area. Visual system: warm ivory #F8F5EF background, dark forest #17332F text and primary buttons, terracotta #B84932 accents, pale lime #E4ECAC status chips, white cards, thin warm-gray rules. Distinctive small lowercase serif wordmark 'reno' with a tiny terracotta square. Large elegant contemporary serif page titles, clean highly legible sans serif UI and tabular monetary figures. Generous 24px side margins at a 390px logical width, 48px tall buttons, 16px body text. Restrained rounded 12px cards, no excessive shadows or gradients. Human, calm, precise, premium residential editorial aesthetic. Small monoline icons. Every piece of copy should be sharply readable, correctly spelled. Use exact supplied figures. All people, providers, costs and project data are fictional design examples. Do not put explanatory labels outside the app.",
+  "screens": [
+    {
+      "id": "01",
+      "slug": "home",
+      "title": "Home / active projects",
+      "group": "Homeowner",
+      "spec": "Homeowner HOME dashboard. Small reno wordmark top left, notification bell top right. Greeting 'Good morning, Maya' then large serif title 'Your home.\\nYour say.' Small location 'St. Augustine, FL'. Hero project card with lovely editorial photo of a cream kitchen and handmade sage tile backsplash; label 'Kitchen backsplash', status chip 'In progress', contractor 'Coastal Tile Co.'. Three stage dots caption 'Prep complete · Tile next'. Important terracotta-tinted action card 'A change needs your say' and 'Edge trim upgrade · +$240 · +1 day', link 'Review change →'. Compact two-column money row 'Approved budget $4,800' and 'Paid $1,440'. Dark forest full width button '+ Start a project'. Small editorial guide link 'Before you hire: 5 things to ask'. Bottom nav exactly 'Home', 'Projects', 'Guides', 'Account', Home selected. No charts or generic dashboard clutter.",
+      "image": "screens/01-home.png"
+    },
+    {
+      "id": "02",
+      "slug": "welcome",
+      "title": "Welcome",
+      "group": "Access",
+      "spec": "Warm editorial welcome. Small reno wordmark. Top two-thirds a beautiful sunlit cream kitchen with sage backsplash, architectural crop. Headline 'Your home. Your say.' Body 'Know the cost. Keep the record. Own the outcome.' Main button 'Start my project'. Secondary 'I already have an account'. Small text link 'I’m a contractor'. No bottom navigation.",
+      "image": "screens/02-welcome.png"
+    },
+    {
+      "id": "03",
+      "slug": "sign-in",
+      "title": "Create account / sign in",
+      "group": "Access",
+      "spec": "Back arrow. Title 'Make room for clarity.' Subtitle 'Create an account or sign in.' Continue with Apple outlined button, divider 'or use email', email field populated 'maya@example.com', primary 'Continue with email'. Small text 'We’ll send you a one-time code.' Terms and Privacy links. No password field, no bottom tabs.",
+      "image": "screens/03-sign-in.png"
+    },
+    {
+      "id": "04",
+      "slug": "verification",
+      "title": "Email verification",
+      "group": "Access",
+      "spec": "Back arrow, small wordmark. Title 'Check your inbox.' Text 'Enter the 6-digit code sent to maya@example.com'. Six large code boxes, first 3 filled 2 4 8 then empty. Link 'Use a different email'. Primary 'Verify email' disabled until filled. Text 'Resend code in 24s'. No keyboard, spacious page.",
+      "image": "screens/04-verification.png"
+    },
+    {
+      "id": "05",
+      "slug": "account",
+      "title": "Account and settings",
+      "group": "Access",
+      "spec": "Title 'Your account'. Avatar initials MC, 'Maya Chen', 'maya@example.com'. Refined grouped list: 'My home / St. Augustine, FL', 'Notifications', 'Privacy & sharing', 'Help with a project', 'Download my data'. Separate links 'Switch to contractor', 'Sign out', 'Delete account'. Bottom tabs Home Projects Guides Account, Account selected.",
+      "image": "screens/05-account.png"
+    },
+    {
+      "id": "06",
+      "slug": "notifications",
+      "title": "Notifications",
+      "group": "Access",
+      "spec": "Back arrow, title 'Your updates'. Filter chips 'All', 'Needs you'. Three clear rows: terracotta dot 'A change needs your say' / 'Kitchen backsplash · +$240 · +1 day' / '10 min ago'; 'Your second quote is here' / 'Palm Tile Studio · $5,250' / 'Yesterday'; 'Prep photos added' / 'Coastal Tile Co. · Kitchen backsplash' / 'Yesterday'. Small 'Mark all read' link. Clear deep-link chevrons.",
+      "image": "screens/06-notifications.png"
+    },
+    {
+      "id": "07",
+      "slug": "projects",
+      "title": "Project list",
+      "group": "Homeowner",
+      "spec": "Title 'Your projects', compact plus button. Segmented control 'Active', 'Completed'. Three slim cards with small photo thumbnails: 'Kitchen backsplash' status 'In progress' and '1 decision needs you'; 'Guest bath refresh' status 'Getting quotes' and '2 quotes received'; 'Patio repair' status 'Draft' and 'Continue your request'. Bottom Home Projects Guides Account, Projects active.",
+      "image": "screens/07-projects.png"
+    },
+    {
+      "id": "08",
+      "slug": "project-type",
+      "title": "New project / job type",
+      "group": "Request",
+      "spec": "Back 'Close', progress '1 of 4'. Title 'What are we working on?' Body 'Start with one job. We’ll help with the details.' Six large icon selection tiles: 'Tile & surfaces' selected, 'Painting', 'Roofing', 'Plumbing', 'Electrical', 'Something else'. Small location pill 'St. Augustine, FL · Change'. Sticky primary 'Continue'. No bottom tabs.",
+      "image": "screens/08-project-type.png"
+    },
+    {
+      "id": "09",
+      "slug": "project-scope",
+      "title": "Scope and timing",
+      "group": "Request",
+      "spec": "Back arrow, progress '2 of 4'. Title 'Tell us what you have in mind.' Form fields: 'Project name' value 'Kitchen backsplash'; 'What needs doing?' multiline 'Replace the existing backsplash with sage ceramic tile. Keep the cabinets and counters.' Two side-by-side fields 'Area / About 35 sq ft', 'Timing / Within a month'. 'Home ZIP code / 32084'. Save draft text link. Sticky 'Add photos' button. No tabs.",
+      "image": "screens/09-project-scope.png"
+    },
+    {
+      "id": "10",
+      "slug": "project-photos",
+      "title": "Current photos and inspiration",
+      "group": "Request",
+      "spec": "Back arrow progress '3 of 4'. Title 'Show us the space.' Subtitle 'A few photos make the scope clearer.' Section 'Your kitchen now' with two real kitchen thumbnail photos and '+ Add photo' tile. Section 'The look you love' one sage ceramic tile inspiration image, '+ Add inspiration' tile and link 'Paste a link'. Small 'Keep personal details out of photos.' Bottom forest 'See my price range'. No tabs.",
+      "image": "screens/10-project-photos.png"
+    },
+    {
+      "id": "11",
+      "slug": "price-estimate",
+      "title": "Local price range",
+      "group": "Request",
+      "spec": "Back arrow, small 'PRICE CHECK'. Title 'A starting point, before you hire.' Hero large '$3,800–$5,800', sub 'Estimated local range · Kitchen backsplash'. Elegant horizontal range marker, not a gauge. Three cost rows 'Labor $2,000–$3,000', 'Materials $1,200–$1,800', 'Prep & disposal $600–$1,000'. Small note 'Based on public cost data and local quotes. Illustrative estimate, not a quote.' Assumptions pill '35 sq ft · Ceramic tile · Standard prep'. Text 'Hidden damage or specialty materials can change the price.' Buttons 'Find local quotes', link 'Edit my scope'.",
+      "image": "screens/11-price-estimate.png"
+    },
+    {
+      "id": "12",
+      "slug": "site-visit",
+      "title": "In-person estimate required",
+      "group": "Request",
+      "spec": "Back arrow. Title 'This needs a closer look.' Alternate project 'Roof repair'. Tasteful roof photo crop. Pale amber informational card 'A photo can’t show what’s under the shingles.' Copy 'A contractor needs to visit before giving a reliable quote.' Selection list 'Weekday mornings' selected, 'Weekday afternoons', 'Flexible'. Subtext 'Share availability with local contractors.' Main 'Request a site visit'. No fabricated estimate or confirmed appointment.",
+      "image": "screens/12-site-visit.png"
+    },
+    {
+      "id": "13",
+      "slug": "work-order",
+      "title": "Review and share request",
+      "group": "Request",
+      "spec": "Back arrow '4 of 4'. Title 'Ready for real quotes.' Subtitle 'Review your work order'. Compact summary 'Kitchen backsplash', '32084 · Within a month', 'About 35 sq ft · Ceramic tile'. Two photo thumbnails. Scope paragraph 'Remove existing backsplash and install sage ceramic tile. Keep counters and cabinets.' Edit link. Informational section 'Who can see this?' body 'We’ll share your scope and ZIP code with up to 3 vetted local contractors. Your exact address stays private until you choose to share it.' Checked consent row 'Share my request with local contractors'. Sticky 'Request quotes' button.",
+      "image": "screens/13-work-order.png"
+    },
+    {
+      "id": "14",
+      "slug": "quote-waiting",
+      "title": "Request submitted / quote waiting",
+      "group": "Request",
+      "spec": "Back arrow. Large modest forest checkmark, title 'Your request is out.' Text 'We’re finding the right local fit for your kitchen backsplash.' Three timeline rows 'Work order shared' checked, 'Contractors review your scope' active, 'Compare quotes here' upcoming. Small card 'No quotes yet' / 'We’ll let you know when one arrives.' Links 'Edit request', 'Withdraw request', primary 'View my project'. No promised response time.",
+      "image": "screens/14-quote-waiting.png"
+    },
+    {
+      "id": "15",
+      "slug": "quote-comparison",
+      "title": "Compare quotes",
+      "group": "Hire",
+      "spec": "Back arrow. Title 'Same job. Clearer choices.' Subtitle 'Kitchen backsplash · 2 quotes'. Two genuinely side-by-side narrow columns suitable for mobile: 'Coastal Tile Co.' and 'Palm Tile Studio'; totals '$4,800' and '$5,250'; rows 'Start / Oct 21 / Oct 24', 'Duration / 3 days / 4 days', 'Materials / Included / Included', 'Cleanup / Included / Not specified', 'Deposit / 30% / 40%'. Coastal selected outline. Amber small line '1 item to clarify with Palm Tile'. No best ranking. Bottom primary 'Review Coastal’s quote'. Secondary 'Ask a question'.",
+      "image": "screens/15-quote-comparison.png"
+    },
+    {
+      "id": "16",
+      "slug": "contractor-profile",
+      "title": "Contractor profile and vetting",
+      "group": "Hire",
+      "spec": "Back arrow. Small company monogram CT. Title 'Coastal Tile Co.' location 'St. Augustine · Tile specialist'. Horizontal work-photo strip of well finished kitchens. Section 'What Reno checked' with factual rows 'Identity confirmed', 'Insurance document checked · Sep 2026', 'Trade credentials reviewed · Sep 2026'. Small 'See verification details' link. Intro 'Small team. Careful tile work. Clear communication.' Service chips 'Backsplashes', 'Floor tile', 'Repairs'. Main button 'View quote · $4,800'. Avoid fabricated ratings or guarantee badges.",
+      "image": "screens/16-contractor-profile.png"
+    },
+    {
+      "id": "17",
+      "slug": "quote-detail",
+      "title": "Itemized quote",
+      "group": "Hire",
+      "spec": "Back arrow, title 'The full quote.' Provider Coastal Tile Co.; project Kitchen backsplash. Large '$4,800' and 'Quote valid until Oct 25'. Item rows 'Labor $2,600', 'Ceramic tile & supplies $1,500', 'Prep & disposal $700'. Rules. 'Schedule / Oct 21–23', 'Deposit / $1,440 (30%)', 'Balance / $3,360 on completion'. Collapsible rows 'Included in the work', 'Not included', 'Attached quote.pdf'. Primary 'Review the terms', secondary 'Ask for a revision'.",
+      "image": "screens/17-quote-detail.png"
+    },
+    {
+      "id": "18",
+      "slug": "contract-upload",
+      "title": "Upload contract / document processing",
+      "group": "Hire",
+      "spec": "Back arrow. Title 'Let’s read the fine print.' Subtitle 'Upload a quote or contract to check what needs a closer look.' Large dashed upload area with document icon 'Choose a file' and 'PDF or photo'. Below attached row 'Coastal-quote.pdf · 3 pages' with remove icon. Small explanatory card 'We look for unclear scope, payment terms, and missing details.' Primary 'Review document'. Under it 'AI review can miss things. Get professional advice when needed.' No legal advice claims.",
+      "image": "screens/18-contract-upload.png"
+    },
+    {
+      "id": "19",
+      "slug": "contract-review",
+      "title": "AI contract findings",
+      "group": "Hire",
+      "spec": "Back arrow, title 'Know what you’re agreeing to.' Small badge 'AI document review'. File Coastal-quote.pdf. Summary '3 points to clarify'. Rows with careful neutral markers: 'Payment timing / Final payment isn’t tied to completion'; 'Change approvals / Written approval isn’t specified'; 'Cleanup / Disposal responsibility is missing'. Small 'Source: uploaded quote · 3 pages'. Primary 'Review first finding'; secondary 'Ask contractor to clarify'. Footer note 'AI findings are prompts for review, not legal advice.'",
+      "image": "screens/19-contract-review.png"
+    },
+    {
+      "id": "20",
+      "slug": "contract-finding",
+      "title": "Finding with source and question",
+      "group": "Hire",
+      "spec": "Back arrow, small 'FINDING 1 OF 3'. Large title 'When is the balance due?' Card label 'From your quote · Page 2' with exact quoted text 'Balance due on final day of work.' Explanation 'The quote does not say whether punch-list items must be finished first.' Section 'A question you can send' and editable text 'Can we confirm that the final balance is due after the agreed work and punch list are complete?' Primary 'Send question'; secondary 'Back to findings'. No auto-rewriting contract or signing.",
+      "image": "screens/20-contract-finding.png"
+    },
+    {
+      "id": "21",
+      "slug": "hire-confirmation",
+      "title": "Confirm chosen contractor",
+      "group": "Hire",
+      "spec": "Back arrow. Title 'Your choice. On record.' Provider card 'Coastal Tile Co.' 'Kitchen backsplash'. Summary rows 'Agreed quote $4,800', 'Start date Oct 21', 'Duration 3 days', 'Deposit $1,440'. Attachment 'Final quote · v2.pdf'. Checked checkbox 'I’ve reviewed the quote and agreed terms.' Small plain sentence 'This records your selection. Sign any required agreement directly with your contractor.' Primary 'Confirm contractor'; secondary 'Back to quote'. No e-signature or money transfer.",
+      "image": "screens/21-hire-confirmation.png"
+    },
+    {
+      "id": "22",
+      "slug": "project-overview",
+      "title": "Active project overview",
+      "group": "Work",
+      "spec": "Back arrow. Title 'Kitchen backsplash'. Chip 'In progress', provider Coastal Tile Co. Compact segmented navigation 'Overview', 'Record', 'Money', 'Punch list', Overview active. Thin timeline 'Prep ✓', 'Tile · Oct 22', 'Finish · Oct 24'. Terracotta action card 'Edge trim upgrade' '+$240 · +1 day' 'Review change →'. White summary card 'Approved $4,800', 'Paid $1,440', 'Remaining $3,360'. Section 'Latest update' small tile-prep photo and 'Surface prep is finished. · Alex, today'. Bottom primary 'Open project record'.",
+      "refinement_prompt": "prompts/22-project-overview-refinement.txt",
+      "image": "screens/22-project-overview-v2.png"
+    },
+    {
+      "id": "23",
+      "slug": "project-record-thread",
+      "title": "Unified project record",
+      "group": "Work",
+      "spec": "Back arrow title 'Project record', subtitle 'Kitchen backsplash'. Chronological refined thread with date 'Today'. Contractor message Alex / Coastal Tile Co. 'Surface prep is finished. Ready for tile tomorrow.' and small real photo. System record 'Payment logged · $1,440 · Oct 20' with receipt link. Structured terracotta card 'Change proposed · Edge trim upgrade' '+$240 · +1 day' 'Review change'. User reply 'Thanks—please show me the trim options.' Bottom composer 'Message or add an update…' attachment plus and send arrow. Distinguish messages from structured records.",
+      "image": "screens/23-project-record-thread.png"
+    },
+    {
+      "id": "24",
+      "slug": "add-update",
+      "title": "Post photo update",
+      "group": "Work",
+      "spec": "Close icon and title 'Add an update'. Small selector 'Kitchen backsplash'. Large attached photo of newly installed sage tile, thumbnail remove X. Multiline input 'The tile is in. Please check the edge near the window before we grout.' Attachment action 'Add photos or files'. Visibility line 'Shared with Coastal Tile Co. in the project record'. Sticky primary 'Post update'. No tabs.",
+      "image": "screens/24-add-update.png"
+    },
+    {
+      "id": "25",
+      "slug": "change-review",
+      "title": "Approve or decline change",
+      "group": "Work",
+      "spec": "Back arrow small 'CHANGE REQUEST 01'. Title 'You decide what changes.' Card 'Edge trim upgrade' / 'Proposed by Coastal Tile Co.' concise reason 'Brass trim gives the exposed tile edge a finished look.' Two trim swatch thumbnails. Clear rows 'Added cost +$240', 'Schedule impact +1 day', 'New project total $5,040', 'New finish date Oct 24'. Status 'Awaiting your approval'. Small 'Work on this change starts only after you approve.' Equal clear controls 'Approve change' forest and 'Decline' outline; text link 'Ask a question'.",
+      "image": "screens/25-change-review.png"
+    },
+    {
+      "id": "26",
+      "slug": "budget",
+      "title": "Budget and payment ledger",
+      "group": "Work",
+      "spec": "Back arrow title 'Every dollar, visible.' Subtitle Kitchen backsplash. Summary large 'Approved total $5,040'. Rows 'Original quote $4,800', 'Approved changes +$240'. Horizontal bar 29% filled with labels 'Paid $1,440' and 'Remaining $3,600'. Section 'Payment record' row 'Deposit / Oct 20 / $1,440 / Logged by you'. Section 'Still to pay' row 'Completion balance / $3,600'. Note 'Payments are recorded here. Money is paid directly to your contractor.' Primary 'Log a payment'; secondary 'View receipts'.",
+      "image": "screens/26-budget.png"
+    },
+    {
+      "id": "27",
+      "slug": "log-payment",
+      "title": "Log external payment",
+      "group": "Work",
+      "spec": "Back arrow title 'Keep the receipt.' Subtitle 'Log a payment to Coastal Tile Co.' Form 'Amount / $1,440', 'Paid on / Oct 20, 2026', 'Method / Bank transfer', 'Milestone / Deposit'. Attachment tile 'bank-receipt.jpg' with small image icon, 'Add receipt' link. Notes optional. Informational text 'This saves a record. It does not send money.' Primary 'Save payment record'. No credit card payment fields.",
+      "image": "screens/27-log-payment.png"
+    },
+    {
+      "id": "28",
+      "slug": "punch-list",
+      "title": "Punch list overview",
+      "group": "Finish",
+      "spec": "Back arrow, title 'A clear list of what’s left.' Subtitle Kitchen backsplash. Progress '2 of 3 resolved'. Filter chips 'Open 1', 'Resolved 2'. Open item white card with photo corner of tile 'Finish the window edge' label 'Ready for your review' assignee Coastal Tile Co. Completed rows 'Clean grout haze' and 'Remove protective covering' checked. Main '+ Add an item'. Secondary 'Review finished work'. Calm no celebratory confetti while open.",
+      "refinement_prompt": "prompts/28-punch-list-refinement.txt",
+      "image": "screens/28-punch-list-v2.png"
+    },
+    {
+      "id": "29",
+      "slug": "punch-add",
+      "title": "Add punch item",
+      "group": "Finish",
+      "spec": "Close icon. Title 'What needs attention?' Fields 'Item / Finish the window edge', 'Details / There’s an exposed edge beside the window. Please finish it with the agreed trim.', 'Room / Kitchen', 'Assigned to / Coastal Tile Co.'. Photo upload with closeup of tile edge. Primary 'Add to punch list'. Small 'Your contractor will see this in the project record.'",
+      "image": "screens/29-punch-add.png"
+    },
+    {
+      "id": "30",
+      "slug": "punch-review",
+      "title": "Homeowner verifies resolution",
+      "group": "Finish",
+      "spec": "Back arrow. Title 'Does this look finished?' Item 'Finish the window edge'. Segmented small image tabs 'Before' and 'After' active. Large close-up photo of neatly finished brass edge on sage backsplash. Contractor note 'Trim installed and sealed. Ready for your check.' Time 'Alex · Today, 3:20 PM'. Status 'Awaiting your confirmation'. Primary 'Mark resolved'. Secondary outline 'Needs more work'. Link 'Add a comment'.",
+      "image": "screens/30-punch-review.png"
+    },
+    {
+      "id": "31",
+      "slug": "finish-project",
+      "title": "Close project",
+      "group": "Finish",
+      "spec": "Back arrow. Title 'Finish with everything in place.' Project Kitchen backsplash. Three checked checklist rows '3 punch-list items resolved', 'Final photos saved', 'Quote and changes on record'. Money card 'Approved $5,040', 'Payments logged $5,040', 'Remaining $0'. Checkbox 'I’ve reviewed the completed work.' Primary 'Complete project'. Small 'Your project record stays available in Completed projects.' No lifetime transfer claim.",
+      "image": "screens/31-finish-project.png"
+    },
+    {
+      "id": "32",
+      "slug": "saved-record",
+      "title": "Completed project archive",
+      "group": "Finish",
+      "spec": "Back arrow, small pale lime 'COMPLETED'. Title 'A job well kept.' Beautiful final kitchen sage backsplash photo. 'Kitchen backsplash', 'Completed Oct 24, 2026', 'Coastal Tile Co.', 'Final cost $5,040'. Clean document rows 'Final quote', '1 approved change', '2 payment receipts', 'Photos & project record', 'Completed punch list'. Primary 'Export project record'. Secondary 'Start another project'. No property resale or lifetime subscription.",
+      "image": "screens/32-saved-record.png"
+    },
+    {
+      "id": "33",
+      "slug": "guides",
+      "title": "Guide catalog",
+      "group": "Guides",
+      "spec": "Title 'A little know-how goes a long way.' Tabs 'Browse', 'My library'. Featured editorial cover in pale lime with serif 'Before you hire' and small sketch of a house, label 'FREE GUIDE', link 'Read guide'. Two smaller catalog rows 'The renovation work order / $12' and 'A better final walkthrough / Free'. Prices fictional concept examples. Bottom tabs Home Projects Guides Account, Guides active. No financing or marketplace.",
+      "image": "screens/33-guides.png"
+    },
+    {
+      "id": "34",
+      "slug": "guide-reader",
+      "title": "Guide detail / reading",
+      "group": "Guides",
+      "spec": "Back arrow. Label 'RENO FIELD GUIDE · 5 MIN READ'. Title 'Before you hire.' Intro 'Five questions that make the next conversation easier.' Numbered editorial content '01 What is included?' paragraph 'Ask for a written scope that names materials, prep, cleanup, and anything excluded.' '02 What could change the price?' paragraph 'Agree on how changes will be priced and approved.' '03 When are payments due?' short body. Bottom sticky outlined 'Save to my library'. Book-like reading, no generic cards.",
+      "image": "screens/34-guide-reader.png"
+    },
+    {
+      "id": "35",
+      "slug": "unsupported-area",
+      "title": "Outside launch area",
+      "group": "States",
+      "spec": "Back arrow small reno wordmark. Title 'We’re starting close to home.' Small minimal elegant line map with pin 'St. Augustine'. Text 'Local contractor matching is currently available in St. Augustine.' Entered ZIP field '10011' with 'Edit ZIP'. Section 'Be first to know when we reach you.' Email 'maya@example.com'. Primary 'Notify me'. Secondary 'Explore free guides'. No false available contractor matches.",
+      "image": "screens/35-unsupported-area.png"
+    },
+    {
+      "id": "36",
+      "slug": "upload-error",
+      "title": "Recoverable upload failure",
+      "group": "States",
+      "spec": "Back arrow title 'Let’s read the fine print.' File row 'Coastal-quote.pdf' with amber icon and 'Upload interrupted'. Plain helpful error 'Your connection dropped. Your project details are saved.' Buttons 'Try upload again' forest and 'Choose another file' outline. Small link 'Continue later'. Do not show catastrophic full screen alarm, keep calm ivory UI and document illustration.",
+      "image": "screens/36-upload-error.png"
+    },
+    {
+      "id": "37",
+      "slug": "contractor-onboarding",
+      "title": "Contractor business setup",
+      "group": "Contractor",
+      "spec": "Small reno wordmark with 'for contractors'. Back arrow, '1 of 2'. Title 'Good work starts with a clear scope.' Fields 'Business name / Coastal Tile Co.', 'Your name / Alex Rivera', 'Trade / Tile & surfaces', 'Service ZIP / 32084', 'Service radius / 15 miles'. Primary 'Continue to verification'. Small 'Your profile is reviewed before you can buy leads.' Same design system as homeowner.",
+      "image": "screens/37-contractor-onboarding.png"
+    },
+    {
+      "id": "38",
+      "slug": "contractor-vetting",
+      "title": "Vetting submission / pending",
+      "group": "Contractor",
+      "spec": "Back arrow, small 'CONTRACTOR VERIFICATION'. Title 'Put trust on the record.' Checklist document upload rows 'Identity / Submitted', 'Insurance / insurance.pdf', 'Trade credentials / Add document'. Text 'Only submit credentials relevant to your trade.' Plain panel 'Reno reviews your documents before your profile goes live.' Primary 'Submit for review'. Secondary 'Save and finish later'. Do not imply instant vetting or guaranteed work.",
+      "image": "screens/38-contractor-vetting.png"
+    },
+    {
+      "id": "39",
+      "slug": "contractor-leads",
+      "title": "Qualified local leads",
+      "group": "Contractor",
+      "spec": "Title 'Good jobs. Close to home.' Small profile avatar AR. Status 'Profile reviewed'. Filter chips 'Tile', 'Within 15 miles'. Lead cards with small project photos: 'Kitchen backsplash / St. Augustine · 32084 / About 35 sq ft / Within a month', 'Bathroom floor / St. Augustine · 32086 / About 60 sq ft / Flexible'. First has badge 'Photos + clear scope'. Button 'View lead' in each. Bottom nav 'Leads', 'Jobs', 'Inbox', 'Account', Leads selected. No exact home address or contact details.",
+      "image": "screens/39-contractor-leads.png"
+    },
+    {
+      "id": "40",
+      "slug": "lead-purchase",
+      "title": "Lead details / purchase",
+      "group": "Contractor",
+      "spec": "Back arrow, title 'Kitchen backsplash'. Location 'St. Augustine · 32084' no exact address. Kitchen photo, concise scope 'Remove existing tile. Install sage ceramic backsplash. About 35 sq ft.' Timing 'Within a month'. Cost card 'Lead fee $25' tiny 'Illustrative pricing'. Explanation 'Unlock this homeowner’s request and send a quote. Buying a lead does not guarantee the job.' Checkbox 'I agree to the lead purchase terms'. Primary 'Buy lead · $25'. Secondary 'Back to leads'. No masked fake contacts.",
+      "refinement_prompt": "prompts/40-lead-purchase-refinement.txt",
+      "image": "screens/40-lead-purchase-v2.png"
+    },
+    {
+      "id": "41",
+      "slug": "quote-builder",
+      "title": "Contractor creates quote",
+      "group": "Contractor",
+      "spec": "Back arrow title 'Make the scope clear.' Subtitle 'Quote for Maya · Kitchen backsplash'. Editable line item rows 'Labor $2,600', 'Tile & supplies $1,500', 'Prep & disposal $700', link '+ Add line item'. Total '$4,800'. Compact fields 'Start / Oct 21', 'Duration / 3 days', 'Deposit / 30%'. Expandable 'Included & excluded' and 'Attach quote or terms'. Primary 'Preview quote'. No tabs.",
+      "image": "screens/41-quote-builder.png"
+    },
+    {
+      "id": "42",
+      "slug": "quote-preview",
+      "title": "Contractor quote review and send",
+      "group": "Contractor",
+      "spec": "Back arrow label 'QUOTE PREVIEW'. Title 'Ready for Maya.' Coastal Tile Co. / Kitchen backsplash. Large total '$4,800'. Scope 'Remove existing backsplash. Supply and install 35 sq ft of ceramic tile. Prep and disposal included.' Schedule 'Oct 21–23 · 3 days'. Payment rows 'Deposit $1,440', 'On completion $3,360'. Attached quote.pdf. Small 'The homeowner can review and ask questions before choosing you.' Primary 'Send quote'; secondary 'Keep editing'.",
+      "refinement_prompt": "prompts/42-quote-preview-refinement.txt",
+      "image": "screens/42-quote-preview-v2.png"
+    },
+    {
+      "id": "43",
+      "slug": "contractor-jobs",
+      "title": "Contractor jobs and quote status",
+      "group": "Contractor",
+      "spec": "Title 'Your work, in order.' Segmented 'Active', 'Quotes', 'Completed', Active selected. Main project card kitchen photo 'Maya · Kitchen backsplash', 'Oct 21–24', status 'In progress', action chip '1 punch item to finish'. Second restrained row 'Jordan · Bathroom floor', 'Starts Oct 28', status 'Scheduled'. Bottom Leads Jobs Inbox Account, Jobs selected. Top notification bell.",
+      "image": "screens/43-contractor-jobs.png"
+    },
+    {
+      "id": "44",
+      "slug": "contractor-project",
+      "title": "Contractor job workspace",
+      "group": "Contractor",
+      "spec": "Back arrow title 'Maya’s kitchen backsplash'. Status In progress. Segmented 'Overview', 'Record', 'Money', 'Punch list'. Schedule 'Finish Oct 24'. Main next action 'Finish the window edge / 1 open punch item' and link 'Open item'. Summary 'Approved total $5,040', 'Homeowner logged $1,440 paid'. Buttons 'Post an update', 'Propose a change'. Small timeline event 'Maya approved edge trim upgrade · +$240 · +1 day'. Keep financial data visibly recorded not bank verified.",
+      "refinement_prompt": "prompts/44-contractor-project-refinement.txt",
+      "image": "screens/44-contractor-project-v2.png"
+    },
+    {
+      "id": "45",
+      "slug": "change-compose",
+      "title": "Contractor proposes change",
+      "group": "Contractor",
+      "spec": "Close icon title 'Put the change in writing.' Fields 'Change / Edge trim upgrade', 'Reason / Finish the exposed tile edge with brass trim.', 'Added cost / $240', 'Extra time / 1 day'. Attachment trim photo thumbnail. Calculated preview 'Current total $4,800 → Proposed $5,040', 'Finish Oct 23 → Oct 24'. Note 'Wait for homeowner approval before starting this change.' Primary 'Send for approval'. No automatic approval.",
+      "image": "screens/45-change-compose.png"
+    },
+    {
+      "id": "46",
+      "slug": "contractor-punch",
+      "title": "Contractor submits punch resolution",
+      "group": "Contractor",
+      "spec": "Back arrow title 'Finish the window edge'. Status 'Open', project Maya’s kitchen backsplash. Original small issue photo and note 'Please finish the exposed edge with the agreed trim.' Section 'Show the fix' with large after-photo thumbnail of brass trim. Comment 'Trim installed and sealed.' Primary 'Send for homeowner review'. Note 'Maya confirms when the item is resolved.' No contractor-only resolve button.",
+      "refinement_prompt": "prompts/46-contractor-punch-refinement.txt",
+      "image": "screens/46-contractor-punch-v2.png"
+    },
+    {
+      "id": "47",
+      "slug": "guide-purchase",
+      "title": "Digital work order purchase",
+      "group": "Guides",
+      "spec": "Back arrow. Title 'A clearer work order.' Elegant pale lime downloadable template cover 'THE RENO WORK ORDER'. Product 'Reusable project scope template' price '$12' small 'Illustrative price'. Included rows 'Scope & materials checklist', 'Quote comparison worksheet', 'Printable PDF'. Email delivery 'maya@example.com'. Primary 'Continue to checkout · $12'. Small 'Secure checkout opens next.' Secondary 'Back to guides'. No actual card details or app project fees.",
+      "image": "screens/47-guide-purchase.png"
+    },
+    {
+      "id": "48",
+      "slug": "guide-library",
+      "title": "Owned guide library",
+      "group": "Guides",
+      "spec": "Title 'Your field notes.' Tabs Browse and My library active. Two clear document tiles 'The Reno work order / Purchased · PDF / Download', 'Before you hire / Saved guide / Read'. Small confirmation banner 'Your work order is ready.' Text link 'Purchase receipt'. Empty lower whitespace balanced with small editorial house-line illustration. Bottom Home Projects Guides Account, Guides selected.",
+      "image": "screens/48-guide-library.png"
+    },
+    {
+      "id": "49",
+      "slug": "change-approved",
+      "title": "Recorded change approval",
+      "group": "States",
+      "spec": "Back arrow title 'Your decision is saved.' Modest forest checkmark. Structured record 'Change 01 · Edge trim upgrade' status 'Approved by Maya'. Two key numbers 'New approved total $5,040', 'New finish date Oct 24'. Details 'Added cost $240', 'Added time 1 day', 'Approved Oct 21, 10:42 AM'. Plain 'Coastal Tile Co. has been notified. This approval is saved in your project record.' Primary 'Back to project'. Secondary 'View recorded change'.",
+      "image": "screens/49-change-approved.png"
+    },
+    {
+      "id": "50",
+      "slug": "withdraw-request",
+      "title": "Withdraw request confirmation",
+      "group": "States",
+      "spec": "Dimmed ivory request overview behind a well-sized native bottom sheet. Sheet title 'Withdraw this request?' Text 'Contractors will no longer be able to quote on your kitchen backsplash. Your draft and any quotes already received stay saved.' Optional selector 'Reason / Plans changed'. Destructive terracotta button 'Withdraw request'. Outlined button 'Keep request open'. Close X. Accessible 48px actions, no keyboard.",
+      "refinement_prompt": "prompts/50-withdraw-request-refinement.txt",
+      "image": "screens/50-withdraw-request-v2.png"
+    }
+  ]
+}
