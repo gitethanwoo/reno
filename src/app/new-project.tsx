@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { router } from "expo-router";
-import { Pressable, View } from "react-native";
+import { Stack, router } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useStore, uid } from "@/state/store";
 import { Draft, validateDraft } from "@/domain/model";
@@ -11,7 +11,6 @@ import {
   Eyebrow,
   Field,
   Heading,
-  IconButton,
   Note,
   Screen,
   Segments,
@@ -81,24 +80,31 @@ export default function NewProject() {
         </View>
       }
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
+      <Stack.Screen
+        options={{
+          // Replaces the layout's Cancel with Back after the first step.
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={() => (step > 0 ? setStep((n) => n - 1) : router.back())}
+            >
+              <Text
+                style={{
+                  fontFamily: fonts.regular,
+                  fontSize: 17,
+                  color: colors.ink,
+                }}
+              >
+                {step > 0 ? "Back" : "Cancel"}
+              </Text>
+            </Pressable>
+          ),
         }}
-      >
-        <Eyebrow>
-          {step + 1} of 3 · {["The job", "The details", "The look"][step]}
-        </Eyebrow>
-        {step > 0 && (
-          <IconButton
-            name="back"
-            label="Previous step"
-            onPress={() => setStep((n) => n - 1)}
-          />
-        )}
-      </View>
+      />
+      <Eyebrow>
+        {step + 1} of 3 · {["The job", "The details", "The look"][step]}
+      </Eyebrow>
       <View style={{ height: 4, backgroundColor: colors.line }}>
         <View
           style={{
