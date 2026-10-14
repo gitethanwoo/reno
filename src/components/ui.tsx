@@ -160,10 +160,8 @@ export function Screen({
         <ScrollView
           ref={scrollRef}
           {...scroll}
-          keyboardDismissMode={
-            scroll?.keyboardDismissMode ??
-            (process.env.EXPO_OS === "ios" ? "interactive" : "on-drag")
-          }
+          // Not "interactive": KeyboardAvoidingView doesn't follow the drag, so the footer would lag behind the keyboard.
+          keyboardDismissMode={scroll?.keyboardDismissMode ?? "on-drag"}
           scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
