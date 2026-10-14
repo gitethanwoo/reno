@@ -189,6 +189,52 @@ describe('shared projects', () => {
     await expect(alice.mutation(api.invites.create, { projectId })).rejects.toThrow('already has a contractor');
   });
 
+  test('either member can add project photos, only their own, up to the cap', async () => {
+    const { t, alice, bob } = setup();
+    const projectId = await realProject(alice);
+    await bob.mutation(api.notebook.initialize, {});
+    await bob.mutation(api.notebook.commit, { action: { type: 'profile', name: 'Bob', role: 'homeowner' } });
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    await bob.mutation(api.invites.accept, { token });
+    const png = () => Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1kAAAAASUVORK5CYII='), c => c.charCodeAt(0)).buffer;
+    const upload = (user: User, name: string) => user.action(api.files.upload, { data: png(), contentType: 'image/png', name });
+    const mine = await upload(alice, 'before.png');
+    const site = await upload(bob, 'site-1.png');
+    const site2 = await upload(bob, 'site-2.png');
+    const add = (photos: (typeof mine)[]) => ({ type: 'add-photos' as const, projectId, photos, at: '' });
+
+    // A member cannot attach someone else's upload, even on a shared project.
+    await expect(alice.mutation(api.notebook.commit, { action: add([site]) })).rejects.toThrow('does not belong');
+    await expect(bob.mutation(api.notebook.commit, { action: add([site, mine]) })).rejects.toThrow('does not belong');
+
+    await alice.mutation(api.notebook.commit, { action: add([mine]) });
+    // The contractor documents the site too; a retry is harmless.
+    await bob.mutation(api.notebook.commit, { action: add([site, site2]) });
+    await bob.mutation(api.notebook.commit, { action: add([site, site2]) });
+
+    const seen = (await alice.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!;
+    expect(seen.photos.map(p => p.name)).toEqual(['before.png', 'site-1.png', 'site-2.png']);
+    expect(seen.photos.every(p => p.uri.length > 0)).toBe(true);
+    expect(seen.events[0]).toMatchObject({ author: 'Bob', text: 'Added 2 photos.' });
+    expect(seen.events[0].photo?.name).toBe('site-1.png');
+    expect(seen.events.filter(e => e.text === 'Added 2 photos.')).toHaveLength(1);
+
+    // Cap: fill to 19, then one more fits and nothing past 20 does.
+    await t.run(async ctx => {
+      const row = await ctx.db.query('projects').withIndex('by_projectId', q => q.eq('projectId', projectId)).unique();
+      const filler = Array.from({ length: 16 }, (_, i) => ({ id: 'filler-' + i, uri: '', name: 'Filler' }));
+      await ctx.db.patch(row!._id, { value: { ...row!.value, photos: [...row!.value.photos, ...filler] } });
+    });
+    const last = await upload(alice, 'last.png');
+    const extra = await upload(alice, 'extra.png');
+    await expect(alice.mutation(api.notebook.commit, { action: add([last, extra]) })).rejects.toThrow('Choose 1 or fewer');
+    await alice.mutation(api.notebook.commit, { action: add([last]) });
+    await expect(alice.mutation(api.notebook.commit, { action: add([extra]) })).rejects.toThrow('This one is full');
+    const full = (await bob.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!;
+    expect(full.photos).toHaveLength(20);
+    expect(full.photos.some(p => p.name === 'extra.png')).toBe(false);
+  });
+
   test('sample projects cannot be shared', async () => {
     const { alice } = setup();
     const projectId = await sample(alice);
