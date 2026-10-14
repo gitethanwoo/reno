@@ -1,5 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useId, useImperativeHandle, useRef, useState } from "react";
 import {
+  InputAccessoryView,
+  Keyboard,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -24,7 +26,7 @@ import {
 } from "react-native-paper";
 import { colors, fonts } from "./theme";
 import { Icon, IconName } from "./icon";
-import { cleanAmount, formatAmount } from "@/lib/money-input";
+import { editAmount, formatAmount } from "@/lib/money-input";
 
 export function Copy({
   children,
@@ -369,23 +371,52 @@ export function Row({
     content
   );
 }
+/** What a Field's `ref` can do, e.g. `next.current?.focus()`. */
+export type FieldHandle = Pick<TextInput, "focus" | "blur">;
+const numberPads = ["number-pad", "decimal-pad", "numeric"];
 export function Field({
   label,
   error,
+  ref,
+  onNext,
   ...props
 }: Omit<TextInputProps, "selectionColor" | "cursorColor"> & {
   label: string;
   error?: string;
+  ref?: React.Ref<FieldHandle>;
+  /** Return (or the number pad's Next) moves here instead of closing the keyboard. */
+  onNext?: () => void;
 }) {
+  const bar = useId();
+  // Paper's ref type claims a whole TextInput but hands back only a few
+  // methods, so pass on just the ones a form needs.
+  const input = useRef<FieldHandle | null>(null);
+  useImperativeHandle(ref, () => ({
+    focus: () => input.current?.focus(),
+    blur: () => input.current?.blur(),
+  }));
+  const numberPad = numberPads.includes(props.keyboardType ?? "");
   return (
     <View style={{ gap: 9 }}>
       <PaperInput
+        ref={(handle: FieldHandle | null) => {
+          input.current = handle;
+        }}
         mode="outlined"
         label={label}
         accessibilityLabel={label}
         error={!!error}
         placeholderTextColor="#8B928B"
+        // Single-line fields say what Return does: Next, or Done.
+        returnKeyType={props.multiline ? undefined : onNext ? "next" : "done"}
+        inputAccessoryViewID={numberPad ? bar : undefined}
         {...props}
+        {...(onNext && {
+          onSubmitEditing: onNext,
+          // Keep the keyboard up while focus moves, so nothing jumps.
+          submitBehavior: "submit" as const,
+          blurOnSubmit: false,
+        })}
         outlineStyle={{ borderRadius: 12 }}
         outlineColor={colors.line}
         activeOutlineColor={colors.ink}
@@ -396,8 +427,42 @@ export function Field({
         }}
         style={[{ backgroundColor: colors.white }, props.style]}
       />
+      {numberPad && <KeyboardBar id={bar} onNext={onNext} />}
       {error && <Copy tone="rust">{error}</Copy>}
     </View>
+  );
+}
+/**
+ * iOS number pads have no Return key, so they get Next / Done above the
+ * keyboard, like Contacts. Other platforms have their own way out.
+ */
+function KeyboardBar({ id, onNext }: { id: string; onNext?: () => void }) {
+  if (process.env.EXPO_OS !== "ios") return null;
+  return (
+    <InputAccessoryView nativeID={id}>
+      <View style={s.keyboardBar}>
+        {onNext && (
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={onNext}
+            style={s.keyboardBarButton}
+          >
+            <Text style={[s.keyboardBarText, { fontFamily: fonts.regular }]}>
+              Next
+            </Text>
+          </Pressable>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={Keyboard.dismiss}
+          style={s.keyboardBarButton}
+        >
+          <Text style={s.keyboardBarText}>Done</Text>
+        </Pressable>
+      </View>
+    </InputAccessoryView>
   );
 }
 /** One large, centered amount that formats as currency while typing, like Cash App. */
@@ -405,26 +470,32 @@ export function AmountField({
   label,
   value,
   onChange,
+  autoFocus,
 }: {
   label: string;
   /** The raw amount, e.g. "1440.5". */
   value: string;
   onChange: (raw: string) => void;
+  autoFocus?: boolean;
 }) {
+  const bar = useId();
   return (
     <View style={{ alignItems: "center", gap: 4 }}>
       <Text style={s.label}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         keyboardType="decimal-pad"
+        inputAccessoryViewID={bar}
+        autoFocus={autoFocus}
         placeholder="$0"
         placeholderTextColor={colors.line}
         selectionColor={colors.ink}
         cursorColor={colors.ink}
         value={formatAmount(value)}
-        onChangeText={(text) => onChange(cleanAmount(text))}
+        onChangeText={(text) => onChange(editAmount(value, text))}
         style={s.amount}
       />
+      <KeyboardBar id={bar} />
     </View>
   );
 }
@@ -818,6 +889,21 @@ const s = StyleSheet.create({
     textAlign: "center",
     color: colors.ink,
   },
+  keyboardBar: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 8,
+    paddingHorizontal: 8,
+    backgroundColor: colors.paper,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
+  keyboardBarButton: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+  },
+  keyboardBarText: { fontFamily: fonts.bold, fontSize: 17, color: colors.ink },
   chipActive: { backgroundColor: colors.ink, borderColor: colors.ink },
   box: {
     width: 26,
