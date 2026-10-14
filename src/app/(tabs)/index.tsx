@@ -14,7 +14,7 @@ import {
   Title,
   plural,
 } from "@/components/ui";
-import { money, roleIn } from "@/domain/model";
+import { waitingOn } from "@/features/waiting";
 import { colors } from "@/components/theme";
 import { ProjectCard } from "@/components/project-card";
 import { Icon } from "@/components/icon";
@@ -22,19 +22,14 @@ export default function Home() {
   const { state } = useStore();
   const contractor = state.role === "contractor";
   const active = state.projects.filter((p) => p.status !== "completed");
-  // Only projects where the viewer is the homeowner have decisions waiting on them.
-  const pendingProject = active.find(
-    (p) =>
-      roleIn(p, state) === "homeowner" &&
-      p.changes.some((c) => c.status === "pending"),
-  );
-  const pending = pendingProject?.changes.find((c) => c.status === "pending");
+  const waiting = waitingOn(state);
+  const next = waiting[0];
   return (
     <Screen>
       <Title
         sub={
-          pending
-            ? "One decision is waiting for you."
+          waiting.length
+            ? plural(waiting.length, "thing") + " waiting on you."
             : contractor
               ? "Your jobs, updates and changes in one place."
               : "Everything on your projects is up to date."
@@ -42,28 +37,26 @@ export default function Home() {
       >
         {"Hello, " + (state.name || "there") + "."}
       </Title>
-      {pendingProject && pending && (
+      {next && (
         <Card style={{ backgroundColor: colors.amber, borderColor: "#E7CFB0" }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Icon name="bell" size={20} />
-            <Eyebrow>Your decision, next</Eyebrow>
+            <Eyebrow>Your move</Eyebrow>
           </View>
-          <Heading small>{pending.title}</Heading>
-          <Copy>
-            {pendingProject.title} · +{money(pending.cents)} · +
-            {plural(pending.days, "day")}
-          </Copy>
+          <Heading small>{next.title}</Heading>
+          <Copy>{next.detail}</Copy>
           <Button
-            title="Review change"
+            title={next.action}
             variant="secondary"
             icon="arrow"
-            onPress={() =>
-              router.push({
-                pathname: "/project/[id]/change",
-                params: { id: pendingProject.id, changeId: pending.id },
-              })
-            }
+            onPress={() => router.push(next.href)}
           />
+          {waiting.length > 1 && (
+            <Row
+              title={"See all " + waiting.length}
+              onPress={() => router.push("/notifications")}
+            />
+          )}
         </Card>
       )}
       <View

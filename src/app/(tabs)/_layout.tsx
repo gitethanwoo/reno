@@ -3,9 +3,12 @@ import { Icon, IconName } from "@/components/icon";
 import { IconButton, Wordmark } from "@/components/ui";
 import { colors, fonts } from "@/components/theme";
 import { useStore } from "@/state/store";
+import { waitingOn } from "@/features/waiting";
+import { Text, View } from "react-native";
 
 export default function TabLayout() {
   const { state } = useStore();
+  const waiting = waitingOn(state).length;
   const tabs: { name: string; title: string; icon: IconName }[] = [
     { name: "index", title: "Home", icon: "home" },
     { name: "projects", title: "Projects", icon: "projects" },
@@ -20,11 +23,45 @@ export default function TabLayout() {
         headerTitle: () => <Wordmark />,
         headerTitleAlign: "left",
         headerRight: () => (
-          <IconButton
-            name="bell"
-            label="Notifications"
-            onPress={() => router.push("/notifications")}
-          />
+          <View>
+            <IconButton
+              name="bell"
+              label={
+                waiting
+                  ? `Notifications, ${waiting} waiting on you`
+                  : "Notifications"
+              }
+              onPress={() => router.push("/notifications")}
+            />
+            {waiting > 0 && (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: 2,
+                  right: 2,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  paddingHorizontal: 5,
+                  backgroundColor: colors.rust,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontFamily: fonts.bold,
+                    fontSize: 11,
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  {waiting}
+                </Text>
+              </View>
+            )}
+          </View>
         ),
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.muted,
