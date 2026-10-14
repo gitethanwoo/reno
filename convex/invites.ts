@@ -11,6 +11,8 @@ import {
   saveChildren,
 } from "./notebook";
 import { requireOwner } from "./ownership";
+import { joinedNotice } from "./notify";
+import { schedulePush } from "./push";
 
 // Links are shared by text and opened by tapping, never typed, so the token
 // can be long and unguessable.
@@ -210,6 +212,12 @@ export const accept = mutation({
       joined,
       ...project.events,
     ]);
+    await schedulePush(
+      ctx,
+      invite.projectId,
+      userId,
+      joinedNotice(project, notebook.value.name),
+    );
     return { projectId: invite.projectId };
   },
 });
