@@ -1,12 +1,7 @@
-import { useState } from "react";
-import { Platform, Share, View } from "react-native";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { View } from "react-native";
 import { useProject } from "@/features/use-project";
-import { useSessionMode } from "@/state/session";
 import { contractorOf, type Project } from "@/domain/model";
-import { expiresIn, inviteUrl } from "@/lib/invite";
-import { useAskForPush } from "@/lib/push";
+import { useInvite } from "@/features/use-invite";
 import {
   Button,
   Card,
@@ -30,29 +25,9 @@ const shared = [
   "The punch list and project updates",
 ];
 
-/**
- * iOS attaches `url` as a rich link, so the message leaves it out to avoid
- * pasting it twice. Android ignores `url`, so the link goes in the message.
- */
-async function shareLink(p: Project, from: string, token: string) {
-  const url = inviteUrl(token);
-  const text = from + " invited you to “" + p.title + "” on Reno";
-  await Share.share(
-    Platform.OS === "ios"
-      ? { message: text + ".", url }
-      : { message: text + ": " + url },
-  );
-}
-
 export default function Invite() {
-  const { project: p, role, state } = useProject();
-  const { preview } = useSessionMode();
-  const create = useMutation(api.invites.create);
-  const revoke = useMutation(api.invites.revoke);
+  const { project: p, role } = useProject();
   const task = useTask();
-  // Once the link is out, offer to say when the contractor joins.
-  const askForPush = useAskForPush();
-  const [now] = useState(() => Date.now());
   if (!p)
     return (
       <Screen error={task.error}>
@@ -73,43 +48,29 @@ export default function Invite() {
         />
       </Screen>
     );
-  // Preview mode and the sample project never talk to the server.
-  const offline = preview || p.isSample;
-  const from =
-    p.members?.find((m) => m.role === "homeowner")?.name || state.name;
-  const invite = offline ? null : p.invite;
-  const expiry = invite ? expiresIn(invite.expiresAt, now) : null;
-  const open = invite && expiry ? invite : null;
-  const sendNew = () =>
-    task.run(async () => {
-      const { token } = await create({ projectId: p.id });
-      await shareLink(p, from, token);
-      await askForPush();
-    });
+  return <InviteScreen p={p} />;
+}
+
+function InviteScreen({ p }: { p: Project }) {
+  const task = useTask();
+  const { offline, expiry, expired, share, sendNew, cancel } = useInvite(p);
   return (
     <Screen
       error={task.error}
       footer={
         <Button
-          title={open ? "Share link again" : "Share invite link"}
+          title={expiry ? "Share link again" : "Share invite link"}
           icon="arrow"
           busy={task.busy}
           disabled={offline}
-          onPress={() =>
-            open
-              ? task.run(async () => {
-                  await shareLink(p, from, open.token);
-                  await askForPush();
-                })
-              : sendNew()
-          }
+          onPress={() => task.run(share)}
         />
       }
     >
       <Title sub="Text your contractor a link. They tap it, see this project, and join. The link works once, for 48 hours.">
         Invite your contractor
       </Title>
-      {open ? (
+      {expiry ? (
         <Card style={{ gap: 12 }}>
           <Eyebrow>Link sent</Eyebrow>
           <Copy>
@@ -120,22 +81,18 @@ export default function Invite() {
               title="Send a new link"
               variant="secondary"
               disabled={task.busy}
-              onPress={sendNew}
+              onPress={() => task.run(sendNew)}
             />
             <Button
               title="Cancel invite"
               variant="quiet"
               disabled={task.busy}
-              onPress={() =>
-                task.run(async () => {
-                  await revoke({ projectId: p.id });
-                })
-              }
+              onPress={() => task.run(cancel)}
             />
           </View>
         </Card>
       ) : (
-        invite && (
+        expired && (
           <Note warning>Your last link expired. Share a new one below.</Note>
         )
       )}

@@ -37,15 +37,15 @@ import {
   remaining,
   statusLabel,
   total,
+  type Project,
 } from "@/domain/model";
 import { exportProject } from "@/lib/export-project";
-import { expiresIn } from "@/lib/invite";
+import { useInvite } from "@/features/use-invite";
 import { Icon } from "@/components/icon";
 
 export default function ProjectDetail() {
   const { project: p, state, params, role, commit, addPhotos } = useProject();
   const [tab, setTab] = useState(params.tab ?? "overview");
-  const [now] = useState(() => Date.now());
   const task = useTask();
   const photoTask = useTask();
   const [viewing, setViewing] = useState<number | null>(null);
@@ -58,7 +58,6 @@ export default function ProjectDetail() {
         />
       </Screen>
     );
-  const inviteExpiry = p.invite ? expiresIn(p.invite.expiresAt, now) : null;
   const go = (
     screen:
       | "change"
@@ -146,6 +145,9 @@ export default function ProjectDetail() {
             }
           />
           <ErrorNote error={photoTask.error} />
+          {planning && homeowner && !p.isSample && !contractor && (
+            <InviteCard p={p} onManage={() => go("invite")} />
+          )}
           {pending.map((c) => (
             <Card key={c.id} style={{ backgroundColor: colors.amber }}>
               <Eyebrow>
@@ -236,15 +238,13 @@ export default function ProjectDetail() {
               />
             </Card>
           )}
-          {planning && homeowner && !latest && (
+          {planning && homeowner && !latest && contractor && (
             <Note>
-              {contractor
-                ? contractor.name +
-                  " has joined this project. Their quote will appear here when they send it."
-                : "Your project is saved. Invite your contractor so they can see the scope and send a quote here. Nothing is shared until you do."}
+              {contractor.name +
+                " has joined this project. Their quote will appear here when they send it."}
             </Note>
           )}
-          {(members.length > 0 || (homeowner && !p.isSample)) && (
+          {members.length > 0 && (
             <Card style={{ gap: 0, paddingVertical: 4 }}>
               {members.map((m, i) => (
                 <View
@@ -261,27 +261,6 @@ export default function ProjectDetail() {
                   />
                 </View>
               ))}
-              {homeowner && !p.isSample && !contractor && !complete && (
-                <View
-                  style={{
-                    borderTopWidth: members.length ? 1 : 0,
-                    borderTopColor: colors.line,
-                  }}
-                >
-                  <Row
-                    title="Invite your contractor"
-                    detail={
-                      inviteExpiry
-                        ? "Link sent · expires " + inviteExpiry
-                        : p.invite
-                          ? "Your link expired · send a new one"
-                          : "Text them a link to join"
-                    }
-                    icon="user"
-                    onPress={() => go("invite")}
-                  />
-                </View>
-              )}
             </Card>
           )}
           <Card>
@@ -540,5 +519,35 @@ export default function ProjectDetail() {
         onClose={() => setViewing(null)}
       />
     </Screen>
+  );
+}
+
+/** Inviting the contractor is the homeowner's next step on a new project. */
+function InviteCard({ p, onManage }: { p: Project; onManage: () => void }) {
+  const task = useTask();
+  const { expiry, expired, share } = useInvite(p);
+  return (
+    <Card style={{ backgroundColor: colors.amber }}>
+      <Eyebrow>Your move</Eyebrow>
+      <Heading small>Invite your contractor</Heading>
+      <Copy>
+        {expiry
+          ? "Link sent · expires " +
+            expiry +
+            ". It stops working once they join."
+          : expired
+            ? "Your last link expired. Share a new one."
+            : "Text them a link. They’ll see the scope and photos and send a quote here."}
+      </Copy>
+      <Button
+        title={expiry ? "Share link again" : "Share invite link"}
+        variant="secondary"
+        icon="arrow"
+        busy={task.busy}
+        onPress={() => task.run(share)}
+      />
+      {expiry && <Row title="Manage invite" onPress={onManage} />}
+      <ErrorNote error={task.error} />
+    </Card>
   );
 }
