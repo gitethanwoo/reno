@@ -43,28 +43,30 @@ export default function NewProject() {
       keyboard
       footer={
         <View style={{ gap: 8 }}>
-          <Button
-            title={step === 3 ? "Create project" : "Continue"}
-            icon="arrow"
-            busy={task.busy}
-            onPress={
-              step === 3
-                ? () =>
-                    task.run(async () => {
-                      await save();
-                      await commit({
-                        type: "create-project",
-                        id,
-                        at: new Date().toISOString(),
-                      });
-                      router.replace({
-                        pathname: "/project/[id]",
-                        params: { id },
-                      });
-                    })
-                : next
-            }
-          />
+          {step > 0 && (
+            <Button
+              title={step === 3 ? "Create project" : "Continue"}
+              icon="arrow"
+              busy={task.busy}
+              onPress={
+                step === 3
+                  ? () =>
+                      task.run(async () => {
+                        await save();
+                        await commit({
+                          type: "create-project",
+                          id,
+                          at: new Date().toISOString(),
+                        });
+                        router.replace({
+                          pathname: "/project/[id]",
+                          params: { id },
+                        });
+                      })
+                  : next
+              }
+            />
+          )}
           <Button
             title="Save draft & close"
             variant="quiet"
@@ -127,7 +129,10 @@ export default function NewProject() {
                 key={type}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: draft.type === type }}
-                onPress={() => update("type", type)}
+                onPress={() => {
+                  update("type", type);
+                  setStep(1);
+                }}
                 style={{
                   width: "47%",
                   flexGrow: 1,
