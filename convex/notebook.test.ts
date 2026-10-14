@@ -128,17 +128,19 @@ describe('shared projects', () => {
     await bob.mutation(api.notebook.initialize, {});
     await bob.mutation(api.notebook.commit, { action: { type: 'profile', name: 'Bob', role: 'homeowner' } });
 
-    const { code } = await alice.mutation(api.invites.create, { projectId });
-    expect(code).toMatch(/^[2-9A-HJKMNP-Z]{5}-[2-9A-HJKMNP-Z]{5}$/);
+    const { token, expiresAt } = await alice.mutation(api.invites.create, { projectId });
+    expect(token).toMatch(/^[0-9a-f]{32}$/);
+    const hours = (Date.parse(expiresAt) - Date.now()) / 3_600_000;
+    expect(hours).toBeGreaterThan(47.9);
+    expect(hours).toBeLessThanOrEqual(48);
     let mine = (await alice.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!;
-    expect(mine.invite?.code).toBe(code);
+    expect(mine.invite?.token).toBe(token);
     expect(mine.viewerRole).toBe('homeowner');
 
-    const typed = code.toLowerCase().replace('-', ' ');
-    const preview = await bob.query(api.invites.preview, { code: typed });
+    const preview = await bob.query(api.invites.preview, { token });
     expect(preview).toMatchObject({ status: 'ok', title: 'Primary bath tile', homeowner: 'Alice' });
-    expect(await bob.mutation(api.invites.accept, { code: typed })).toEqual({ projectId });
-    expect(await bob.query(api.invites.preview, { code })).toMatchObject({ status: 'used' });
+    expect(await bob.mutation(api.invites.accept, { token })).toEqual({ projectId });
+    expect(await bob.query(api.invites.preview, { token })).toMatchObject({ status: 'used' });
 
     let theirs = (await bob.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!;
     expect(theirs.viewerRole).toBe('contractor');
@@ -169,21 +171,21 @@ describe('shared projects', () => {
 
     const first = await alice.mutation(api.invites.create, { projectId });
     await alice.mutation(api.invites.revoke, { projectId });
-    expect(await bob.query(api.invites.preview, { code: first.code })).toMatchObject({ status: 'invalid' });
-    expect(await bob.query(api.invites.preview, { code: 'NOPE' })).toMatchObject({ status: 'invalid' });
+    expect(await bob.query(api.invites.preview, { token: first.token })).toMatchObject({ status: 'invalid' });
+    expect(await bob.query(api.invites.preview, { token: 'nope' })).toMatchObject({ status: 'invalid' });
 
     const second = await alice.mutation(api.invites.create, { projectId });
-    expect(await alice.query(api.invites.preview, { code: second.code })).toMatchObject({ status: 'member' });
-    await expect(alice.mutation(api.invites.accept, { code: second.code })).rejects.toThrow('already on');
+    expect(await alice.query(api.invites.preview, { token: second.token })).toMatchObject({ status: 'member' });
+    await expect(alice.mutation(api.invites.accept, { token: second.token })).rejects.toThrow('already on');
     await t.run(async ctx => {
-      const row = await ctx.db.query('invites').withIndex('by_code', q => q.eq('code', second.code)).unique();
+      const row = await ctx.db.query('invites').withIndex('by_token', q => q.eq('token', second.token)).unique();
       await ctx.db.patch(row!._id, { expiresAt: 0 });
     });
-    await expect(bob.mutation(api.invites.accept, { code: second.code })).rejects.toThrow('expired');
+    await expect(bob.mutation(api.invites.accept, { token: second.token })).rejects.toThrow('expired');
 
     const third = await alice.mutation(api.invites.create, { projectId });
-    await bob.mutation(api.invites.accept, { code: third.code });
-    await expect(carol.mutation(api.invites.accept, { code: third.code })).rejects.toThrow('already been used');
+    await bob.mutation(api.invites.accept, { token: third.token });
+    await expect(carol.mutation(api.invites.accept, { token: third.token })).rejects.toThrow('already been used');
     await expect(alice.mutation(api.invites.create, { projectId })).rejects.toThrow('already has a contractor');
   });
 
@@ -191,5 +193,15 @@ describe('shared projects', () => {
     const { alice } = setup();
     const projectId = await sample(alice);
     await expect(alice.mutation(api.invites.create, { projectId })).rejects.toThrow('Sample');
+  });
+
+  test('invite links open the app, with a fallback page', async () => {
+    const { t, alice } = setup();
+    const projectId = await realProject(alice);
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    const page = await t.fetch(`/join/${token}`, { method: 'GET' });
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain(`reno://join/${token}`);
+    expect((await t.fetch('/join/<script>', { method: 'GET' })).status).toBe(404);
   });
 });

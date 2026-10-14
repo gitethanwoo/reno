@@ -163,7 +163,7 @@ export async function loadProject(
       .first();
     if (open && !open.acceptedBy)
       invite = {
-        code: open.code,
+        token: open.token,
         expiresAt: new Date(open.expiresAt).toISOString(),
       };
   }

@@ -64,7 +64,7 @@ const quoteSchema = z.object({
 export type Quote = z.infer<typeof quoteSchema>;
 export const memberSchema = z.object({ name: z.string(), role: roleSchema });
 export type Member = z.infer<typeof memberSchema>;
-export const inviteSchema = z.object({ code: z.string(), expiresAt: z.string() });
+export const inviteSchema = z.object({ token: z.string(), expiresAt: z.string() });
 export type Invite = z.infer<typeof inviteSchema>;
 export const projectSchema = z.object({
   id: z.string(),

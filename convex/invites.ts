@@ -12,20 +12,13 @@ import {
 } from "./notebook";
 import { requireOwner } from "./ownership";
 
-const week = 7 * 24 * 60 * 60 * 1000;
-// No 0/O, 1/I/L: codes are read aloud and typed by hand.
-const alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-
-function newCode() {
-  const bytes = new Uint8Array(10);
+// Links are shared by text and opened by tapping, never typed, so the token
+// can be long and unguessable.
+const lifetime = 48 * 60 * 60 * 1000;
+function newToken() {
+  const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  const chars = Array.from(bytes, (b) => alphabet[b % alphabet.length]);
-  return `${chars.slice(0, 5).join("")}-${chars.slice(5).join("")}`;
-}
-/** Accepts lowercase, spaces, and a missing dash. */
-function normalize(code: string) {
-  const raw = code.toUpperCase().replace(/[^0-9A-Z]/g, "");
-  return raw.length === 10 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 async function requireHomeowner(
   ctx: QueryCtx,
@@ -46,7 +39,7 @@ async function openInvites(ctx: QueryCtx, projectId: string) {
 
 export const create = mutation({
   args: { projectId: v.string() },
-  returns: v.object({ code: v.string(), expiresAt: v.string() }),
+  returns: v.object({ token: v.string(), expiresAt: v.string() }),
   handler: async (ctx, { projectId }) => {
     const userId = await requireOwner(ctx);
     await requireHomeowner(ctx, projectId, userId);
@@ -59,25 +52,18 @@ export const create = mutation({
     const people = await projectMembers(ctx, projectId);
     if (people.some((m) => m.role === "contractor"))
       throw new ConvexError("This project already has a contractor.");
-    // One live code per project: a new code replaces the old one.
+    // One live link per project: a new link replaces the old one.
     for (const row of await openInvites(ctx, projectId))
       await ctx.db.delete(row._id);
-    let code = newCode();
-    while (
-      await ctx.db
-        .query("invites")
-        .withIndex("by_code", (q) => q.eq("code", code))
-        .unique()
-    )
-      code = newCode();
-    const expiresAt = Date.now() + week;
+    const token = newToken();
+    const expiresAt = Date.now() + lifetime;
     await ctx.db.insert("invites", {
-      code,
+      token,
       projectId,
       createdBy: userId,
       expiresAt,
     });
-    return { code, expiresAt: new Date(expiresAt).toISOString() };
+    return { token, expiresAt: new Date(expiresAt).toISOString() };
   },
 });
 
@@ -99,7 +85,7 @@ const problem = (
 ) => ({ status, message });
 
 export const preview = query({
-  args: { code: v.string() },
+  args: { token: v.string() },
   returns: v.union(
     v.object({
       status: v.literal("ok"),
@@ -124,19 +110,19 @@ export const preview = query({
     const userId = await requireOwner(ctx);
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_code", (q) => q.eq("code", normalize(args.code)))
+      .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
     if (!invite)
       return problem(
         "invalid",
-        "That code doesn't match an invite. Check it with the homeowner.",
+        "This invite link isn't valid. Ask the homeowner to send a new one.",
       );
     if (invite.acceptedBy)
       return problem(
         "used",
         invite.acceptedBy === userId
           ? "You've already joined this project."
-          : "This code has already been used. Ask the homeowner for a new one.",
+          : "This link has already been used. Ask the homeowner to send a new one.",
       );
     if (await membership(ctx, invite.projectId, userId))
       return problem("member", "You're already on this project.");
@@ -162,7 +148,7 @@ export const preview = query({
 });
 
 export const accept = mutation({
-  args: { code: v.string() },
+  args: { token: v.string() },
   returns: v.object({ projectId: v.string() }),
   handler: async (ctx, args) => {
     const userId = await requireOwner(ctx);
@@ -174,15 +160,15 @@ export const accept = mutation({
       throw new ConvexError("Your notebook is still getting ready. Try again.");
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_code", (q) => q.eq("code", normalize(args.code)))
+      .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
-    if (!invite) throw new ConvexError("That code doesn't match an invite.");
+    if (!invite) throw new ConvexError("This invite link isn't valid.");
     if (invite.acceptedBy)
-      throw new ConvexError("This code has already been used.");
+      throw new ConvexError("This link has already been used.");
     const now = Date.now();
     if (invite.expiresAt < now)
       throw new ConvexError(
-        "This code has expired. Ask the homeowner for a new one.",
+        "This link has expired. Ask the homeowner to send a new one.",
       );
     if (await membership(ctx, invite.projectId, userId))
       throw new ConvexError("You're already on this project.");

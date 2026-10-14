@@ -92,7 +92,7 @@ export const projectBase = v.object({
   completedAt: v.optional(v.string()),
 });
 export const member = v.object({ name: v.string(), role });
-export const invite = v.object({ code: v.string(), expiresAt: v.string() });
+export const invite = v.object({ token: v.string(), expiresAt: v.string() });
 export const project = projectBase.extend({
   events: v.array(event),
   changes: v.array(change),

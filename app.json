@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.athanir.reno",
       "supportsTablet": true,
       "associatedDomains": [
-        "webcredentials:insightful-viper-971.convex.site"
+        "webcredentials:insightful-viper-971.convex.site",
+        "applinks:insightful-viper-971.convex.site"
       ],
       "appleTeamId": "NSJPQ3TSBT",
       "infoPlist": {

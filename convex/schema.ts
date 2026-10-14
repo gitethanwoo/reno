@@ -23,13 +23,13 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_projectId_and_userId", ["projectId", "userId"]),
   invites: defineTable({
-    code: v.string(),
+    token: v.string(),
     projectId: v.string(),
     createdBy: v.string(),
     expiresAt: v.number(),
     acceptedBy: v.optional(v.string()),
   })
-    .index("by_code", ["code"])
+    .index("by_token", ["token"])
     .index("by_projectId", ["projectId"]),
   events: defineTable({ ...child, value: values.event }).index(
     "by_projectId_and_position",
