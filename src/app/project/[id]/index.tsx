@@ -60,6 +60,10 @@ export default function ProjectDetail() {
   const photoTask = useTask();
   const [viewing, setViewing] = useState<number | null>(null);
   const [viewingThread, setViewingThread] = useState<number | null>(null);
+  // The navigation bar shows the project's name once the big title has
+  // scrolled up under it.
+  const [titleBottom, setTitleBottom] = useState(0);
+  const [titled, setTitled] = useState(false);
   const scroll = useRef<ScrollView>(null);
   // The thread keeps its newest message in view, like Messages, until the
   // person scrolls back through it.
@@ -202,6 +206,10 @@ export default function ProjectDetail() {
       keyboard={record}
       scroll={{
         keyboardDismissMode: record ? "on-drag" : undefined,
+        onScroll: (e) =>
+          setTitled(
+            titleBottom > 0 && e.nativeEvent.contentOffset.y > titleBottom,
+          ),
         onContentSizeChange: toBottom,
         // The keyboard or an attached photo shortens the view; keep the
         // newest message above the composer.
@@ -226,13 +234,18 @@ export default function ProjectDetail() {
     >
       <Stack.Screen
         options={{
-          title: "",
+          title: titled ? p.title : "",
           headerRight: actions.length
             ? () => <ActionMenu label="Add to this project" actions={actions} />
             : undefined,
         }}
       />
-      <View style={{ gap: 10 }}>
+      <View
+        style={{ gap: 10 }}
+        onLayout={(e) =>
+          setTitleBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)
+        }
+      >
         <View style={{ flexDirection: "row", gap: 8 }}>
           <Badge>{statusLabel(p)}</Badge>
           {p.isSample && <Badge warm>Sample project</Badge>}
