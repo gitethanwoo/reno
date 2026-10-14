@@ -79,9 +79,13 @@ export default function ChangeReview() {
                   variant="secondary"
                   disabled={task.busy}
                   onPress={() =>
-                    router.push({
-                      pathname: "/project/[id]/update",
-                      params: { id: p.id, text: "About “" + c.title + "”: " },
+                    router.dismissTo({
+                      pathname: "/project/[id]",
+                      params: {
+                        id: p.id,
+                        tab: "record",
+                        text: "About “" + c.title + "”: ",
+                      },
                     })
                   }
                 />
