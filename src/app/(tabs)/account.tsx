@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useStore } from "@/state/store";
 import { Role } from "@/domain/model";
 import { Alert, View } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import {
@@ -23,10 +24,30 @@ export default function Account() {
   const { state, commit } = useStore();
   const { preview, exitPreview } = useSessionMode();
   const [name, setName] = useState(state.name);
-  const [role, setRole] = useState<Role>(state.role);
   const task = useTask();
   const forgetPush = useForgetPush();
-  const [saved, setSaved] = useState(false);
+  // Like iOS Settings, edits save on their own: the role when tapped, the name when you leave the field.
+  const saveName = () => {
+    const trimmed = name.trim();
+    if (!trimmed) return setName(state.name);
+    if (trimmed !== state.name)
+      task.run(() =>
+        commit({ type: "profile", name: trimmed, role: state.role }),
+      );
+  };
+  const saveRole = (role: Role) =>
+    task.run(() => commit({ type: "profile", name: state.name, role }));
+  const signOut = () =>
+    confirm({
+      title: "Sign out of Reno?",
+      message: "Sign in again with your passkey to see your projects.",
+      action: "Sign out",
+      onConfirm: () =>
+        task.run(async () => {
+          await forgetPush();
+          await authClient.signOut();
+        }),
+    });
   const removeAccount = useMutation(api.account.remove);
   const deletion = useTask();
   const confirmDelete = () =>
@@ -60,20 +81,18 @@ export default function Account() {
         <Field
           label="Your first name"
           value={name}
-          onChangeText={(v) => {
-            setName(v);
-            setSaved(false);
-          }}
+          onChangeText={setName}
+          onBlur={saveName}
+          onSubmitEditing={saveName}
+          returnKeyType="done"
+          autoComplete="given-name"
           maxLength={50}
         />
         <View style={{ gap: 10 }}>
           <Copy style={{ fontFamily: fonts.medium }}>View the app as</Copy>
           <Segments
-            value={role}
-            onChange={(v) => {
-              setRole(v);
-              setSaved(false);
-            }}
+            value={state.role}
+            onChange={saveRole}
             options={[
               { label: "Homeowner", value: "homeowner" },
               { label: "Contractor", value: "contractor" },
@@ -84,17 +103,6 @@ export default function Account() {
             views. On real projects, your role comes from how you joined.
           </Copy>
         </View>
-        <Button
-          title={saved ? "Saved" : "Save changes"}
-          icon={saved ? "check" : undefined}
-          busy={task.busy}
-          onPress={() =>
-            task.run(async () => {
-              await commit({ type: "profile", name, role });
-              setSaved(true);
-            })
-          }
-        />
       </Card>
       <ErrorNote error={task.error} />
       <Card>
@@ -106,15 +114,7 @@ export default function Account() {
         <Button
           title={preview ? "Exit sample notebook" : "Sign out"}
           variant="secondary"
-          onPress={() =>
-            task.run(async () => {
-              if (preview) exitPreview();
-              else {
-                await forgetPush();
-                await authClient.signOut();
-              }
-            })
-          }
+          onPress={preview ? exitPreview : signOut}
         />
       </Card>
       {!preview && (
