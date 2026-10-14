@@ -1,11 +1,16 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
-/** After a decision: confirm with a success haptic and return to the project. */
-export function finish(projectId: string) {
+/** The system "it worked" tap. No-op where haptics are unavailable. */
+export function success() {
   void Haptics.notificationAsync(
     Haptics.NotificationFeedbackType.Success,
   ).catch(() => {});
+}
+
+/** After a decision: confirm with a success haptic and return to the project. */
+export function finish(projectId: string) {
+  success();
   backToProject(projectId);
 }
 

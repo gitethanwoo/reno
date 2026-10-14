@@ -8,6 +8,10 @@ import {
   galleryPhotos,
 } from "@/components/photo-gallery";
 import { View } from "react-native";
+import { TouchableRipple } from "react-native-paper";
+import { Icon } from "@/components/icon";
+import { colors } from "@/components/theme";
+import { backToProject, success } from "@/lib/navigation";
 import {
   Button,
   Card,
@@ -38,6 +42,10 @@ export default function Complete() {
     open = p.punch.filter((i) => i.status !== "resolved").length,
     pending = p.changes.filter((c) => c.status === "pending").length;
   const ready = !open && !pending && remaining(p) === 0;
+  // Each line opens the place where it gets settled.
+  const show = (tab: "overview" | "record" | "money" | "punch") =>
+    router.push({ pathname: "/project/[id]", params: { id: p.id, tab } });
+  const pendingChange = p.changes.find((c) => c.status === "pending");
   return (
     <Screen
       error={task.error}
@@ -53,7 +61,7 @@ export default function Complete() {
             <Button
               title="Back to project"
               variant="quiet"
-              onPress={() => router.back()}
+              onPress={() => backToProject(p.id)}
             />
           </View>
         ) : (
@@ -69,6 +77,8 @@ export default function Complete() {
                   projectId: p.id,
                   at: new Date().toISOString(),
                 });
+                // Stay here: this screen becomes the finished record.
+                success();
               })
             }
           />
@@ -96,26 +106,39 @@ export default function Complete() {
           />
         </>
       )}
-      <Card style={{ gap: 6 }}>
-        <Check done={!open}>
+      <Card style={{ gap: 0, paddingVertical: 4 }}>
+        <Step done={!open} onPress={() => show("punch")}>
           {open
             ? plural(open, "punch item") + " still open"
             : "Punch list resolved"}
-        </Check>
-        <Check done={!pending}>
+        </Step>
+        <Step
+          done={!pending}
+          divider
+          onPress={() =>
+            pending === 1 && pendingChange
+              ? router.push({
+                  pathname: "/project/[id]/change",
+                  params: { id: p.id, changeId: pendingChange.id },
+                })
+              : show(pending ? "overview" : "record")
+          }
+        >
           {pending
             ? plural(pending, "change") + " waiting for a decision"
             : "All changes decided"}
-        </Check>
-        <Check done={remaining(p) === 0}>
+        </Step>
+        <Step done={remaining(p) === 0} divider onPress={() => show("money")}>
           {remaining(p)
             ? money(remaining(p)) + " not yet logged as paid"
             : "All payments logged"}
-        </Check>
+        </Step>
         {complete && (
           <>
             <Divider />
-            <LineItem label="Final cost" value={money(total(p))} strong />
+            <View style={{ paddingVertical: 12 }}>
+              <LineItem label="Final cost" value={money(total(p))} strong />
+            </View>
           </>
         )}
       </Card>
@@ -133,5 +156,43 @@ export default function Complete() {
         </Copy>
       )}
     </Screen>
+  );
+}
+
+/** A checklist line that opens where it gets settled, like a Settings row. */
+function Step({
+  done,
+  divider = false,
+  onPress,
+  children,
+}: {
+  done: boolean;
+  divider?: boolean;
+  onPress: () => void;
+  children: string;
+}) {
+  return (
+    <TouchableRipple
+      accessibilityRole="button"
+      accessibilityLabel={children}
+      onPress={onPress}
+      style={{ marginHorizontal: -20, paddingHorizontal: 20 }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingVertical: 8,
+          borderTopWidth: divider ? 1 : 0,
+          borderTopColor: colors.line,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Check done={done}>{children}</Check>
+        </View>
+        <Icon name="chevron" size={18} />
+      </View>
+    </TouchableRipple>
   );
 }

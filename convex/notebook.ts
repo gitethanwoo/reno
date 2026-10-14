@@ -240,6 +240,8 @@ async function hydrate(ctx: QueryCtx, state: AppState): Promise<AppState> {
     p.photos = await Promise.all(p.photos.map(photo));
     for (const entry of [...p.events, ...p.punch])
       if (entry.photo) entry.photo = await photo(entry.photo);
+    for (const item of p.punch)
+      if (item.fixPhoto) item.fixPhoto = await photo(item.fixPhoto);
   }
   return state;
 }

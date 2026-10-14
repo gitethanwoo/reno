@@ -50,8 +50,11 @@ const punchSchema = z.object({
   title: z.string(),
   note: z.string(),
   status: z.enum(["open", "review", "resolved"]),
+  /** What's wrong, from the homeowner. */
   photo: photoSchema.optional(),
   resolution: z.string().optional(),
+  /** Proof of the latest fix, from the contractor. */
+  fixPhoto: photoSchema.optional(),
 });
 const quoteSchema = z.object({
   id: z.string(),

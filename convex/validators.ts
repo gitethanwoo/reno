@@ -60,6 +60,7 @@ export const punch = v.object({
   ),
   photo: v.optional(photo),
   resolution: v.optional(v.string()),
+  fixPhoto: v.optional(photo),
 });
 export const quote = v.object({
   id: v.string(),
@@ -166,6 +167,14 @@ export const action = v.union(
     at: v.string(),
   }),
   v.object({
+    type: v.literal("punch-edit"),
+    projectId: v.string(),
+    id: v.string(),
+    note: v.string(),
+    photo: v.optional(photo),
+    at: v.string(),
+  }),
+  v.object({
     type: v.literal("punch-review"),
     projectId: v.string(),
     id: v.string(),
@@ -175,6 +184,7 @@ export const action = v.union(
       v.literal("open"),
     ),
     note: v.string(),
+    photo: v.optional(photo),
     at: v.string(),
   }),
   v.object({
