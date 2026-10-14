@@ -6,8 +6,18 @@ import { router } from "expo-router";
 import { View } from "react-native";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
-import { latestQuote, money, parseMoney, quoteTotal } from "@/domain/model";
+import {
+  depositFor,
+  lastCompany,
+  latestQuote,
+  money,
+  parseMoney,
+  quoteTotal,
+} from "@/domain/model";
 import { useAskForPush } from "@/lib/push";
+import { amountOf, cleanAmount, formatAmount } from "@/lib/money-input";
+import { Segmented } from "@/components/segmented";
+import { Stepper } from "@/components/stepper";
 import {
   Button,
   Card,
@@ -18,6 +28,7 @@ import {
   IconButton,
   LineItem,
   Note,
+  plural,
   Screen,
   Title,
   useTask,
@@ -33,10 +44,7 @@ const centsOf = (amount: string) => {
     return 0;
   }
 };
-const wholeNumber = (value: string, message: string) => {
-  if (!/^\d+$/.test(value.trim())) throw new Error(message);
-  return Number(value);
-};
+const depositOptions = [0, 10, 25, 30, 50];
 
 export default function SendQuote() {
   const { project: p, state, role, commit } = useProject();
@@ -46,23 +54,21 @@ export default function SendQuote() {
   // A revision starts from the version the homeowner already has.
   const previous = p ? latestQuote(p) : undefined;
   const [id] = useState(uid);
-  const [company, setCompany] = useState(previous?.company ?? state.name);
+  const [company, setCompany] = useState(
+    () => previous?.company ?? lastCompany(state) ?? state.name,
+  );
   const [lines, setLines] = useState<Line[]>(() =>
     previous
       ? previous.items.map((i) => ({
           key: uid(),
           label: i.label,
-          amount: (i.cents / 100).toFixed(2),
+          amount: amountOf(i.cents),
         }))
       : [blank()],
   );
-  const [deposit, setDeposit] = useState(
-    String(previous?.depositPercent ?? 30),
-  );
+  const [deposit, setDeposit] = useState(previous?.depositPercent ?? 30);
   const [start, setStart] = useState(previous?.start ?? today());
-  const [days, setDays] = useState(
-    previous ? String(previous.durationDays) : "",
-  );
+  const [days, setDays] = useState(previous?.durationDays ?? 1);
   const [cleanup, setCleanup] = useState(previous?.cleanup ?? true);
   const form = JSON.stringify({
     company,
@@ -121,14 +127,8 @@ export default function SendQuote() {
         projectId: p.id,
         id,
         company,
-        depositPercent: wholeNumber(
-          deposit,
-          "Enter the deposit as a whole percent, like 30.",
-        ),
-        durationDays: wholeNumber(
-          days,
-          "Enter how many working days the job takes.",
-        ),
+        depositPercent: deposit,
+        durationDays: days,
         start,
         cleanup,
         items,
@@ -184,11 +184,13 @@ export default function SendQuote() {
             </View>
             <View style={{ flex: 1 }}>
               <Field
-                label="Amount ($)"
-                placeholder="0.00"
+                label="Amount"
+                placeholder="$0"
                 keyboardType="decimal-pad"
-                value={l.amount}
-                onChangeText={(amount) => edit(l.key, { amount })}
+                value={formatAmount(l.amount)}
+                onChangeText={(text) =>
+                  edit(l.key, { amount: cleanAmount(text) })
+                }
               />
             </View>
             {lines.length > 1 && (
@@ -215,36 +217,28 @@ export default function SendQuote() {
       </View>
       <Card>
         <LineItem label="Quote total" value={money(live)} strong />
-        <LineItem
-          label="Deposit"
-          value={
-            /^\d+$/.test(deposit.trim())
-              ? money(Math.round((live * Number(deposit)) / 100))
-              : "—"
-          }
-        />
+        <LineItem label="Deposit" value={money(depositFor(live, deposit))} />
       </Card>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Deposit (%)"
-            keyboardType="number-pad"
-            value={deposit}
-            onChangeText={setDeposit}
-            maxLength={3}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Working days"
-            placeholder="e.g. 3"
-            keyboardType="number-pad"
-            value={days}
-            onChangeText={setDays}
-            maxLength={3}
-          />
-        </View>
-      </View>
+      <Segmented
+        label="Deposit"
+        // An older quote's percent stays selectable.
+        options={
+          depositOptions.includes(deposit)
+            ? depositOptions
+            : [...depositOptions, deposit].sort((a, b) => a - b)
+        }
+        value={deposit}
+        onChange={setDeposit}
+        format={(n) => n + "%"}
+      />
+      <Stepper
+        label="Working days"
+        value={days}
+        onChange={setDays}
+        min={1}
+        max={365}
+        format={(n) => plural(n, "day")}
+      />
       <DateField
         label="Start date"
         value={start}

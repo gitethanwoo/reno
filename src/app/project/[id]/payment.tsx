@@ -5,14 +5,17 @@ import { today } from "@/lib/date";
 import { router } from "expo-router";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
-import { money, parseMoney, remaining } from "@/domain/model";
+import { depositFor, money, paid, parseMoney, remaining } from "@/domain/model";
+import { amountOf } from "@/lib/money-input";
 import {
+  AmountField,
   Button,
   Empty,
   Chips,
   Field,
   Note,
   Screen,
+  Suggestions,
   Title,
   useTask,
 } from "@/components/ui";
@@ -31,6 +34,34 @@ export default function Payment() {
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
+  const left = remaining(p);
+  // Suggest the accepted quote's deposit until anything has been logged.
+  const deposit =
+    p.quote && paid(p) === 0
+      ? depositFor(p.quote.cents, p.quote.depositPercent)
+      : 0;
+  const suggest = (cents: number, purpose: string) => () => {
+    setAmount(amountOf(cents));
+    if (!note.trim()) setNote(purpose);
+  };
+  const suggestions = [
+    ...(deposit > 0 && deposit !== left
+      ? [
+          {
+            label: "Deposit " + money(deposit),
+            onPress: suggest(deposit, "Deposit"),
+          },
+        ]
+      : []),
+    ...(left > 0
+      ? [
+          {
+            label: "Remaining " + money(left),
+            onPress: suggest(left, "Final payment"),
+          },
+        ]
+      : []),
+  ];
   return (
     <Screen
       error={task.error}
@@ -58,16 +89,11 @@ export default function Payment() {
         />
       }
     >
-      <Title sub={money(remaining(p)) + " left on the approved total."}>
+      <Title sub={money(left) + " left on the approved total."}>
         Log a payment
       </Title>
-      <Field
-        label="Amount paid ($)"
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-        value={amount}
-        onChangeText={setAmount}
-      />
+      {suggestions.length > 0 && <Suggestions options={suggestions} />}
+      <AmountField label="Amount paid" value={amount} onChange={setAmount} />
       <DateField
         label="Date paid"
         value={date}

@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TextInputProps,
   TextProps,
   View,
@@ -22,6 +23,7 @@ import {
 } from "react-native-paper";
 import { colors, fonts } from "./theme";
 import { Icon, IconName } from "./icon";
+import { cleanAmount, formatAmount } from "@/lib/money-input";
 
 export function Copy({
   children,
@@ -360,6 +362,70 @@ export function Field({
         style={[{ backgroundColor: colors.white }, props.style]}
       />
       {error && <Copy tone="rust">{error}</Copy>}
+    </View>
+  );
+}
+/** One large, centered amount that formats as currency while typing, like Cash App. */
+export function AmountField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  /** The raw amount, e.g. "1440.5". */
+  value: string;
+  onChange: (raw: string) => void;
+}) {
+  return (
+    <View style={{ alignItems: "center", gap: 4 }}>
+      <Text style={s.label}>{label}</Text>
+      <TextInput
+        accessibilityLabel={label}
+        keyboardType="decimal-pad"
+        placeholder="$0"
+        placeholderTextColor={colors.line}
+        selectionColor={colors.ink}
+        cursorColor={colors.ink}
+        value={formatAmount(value)}
+        onChangeText={(text) => onChange(cleanAmount(text))}
+        style={s.amount}
+      />
+    </View>
+  );
+}
+/** One-tap suggestions that fill in a field. Unlike Chips, nothing stays selected. */
+export function Suggestions({
+  options,
+}: {
+  options: { label: string; onPress: () => void }[];
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: 8,
+      }}
+    >
+      {options.map((o) => (
+        <Pressable
+          key={o.label}
+          accessibilityRole="button"
+          onPress={o.onPress}
+          style={s.chip}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.medium,
+              fontSize: 15,
+              color: colors.ink,
+            }}
+          >
+            {o.label}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -706,6 +772,16 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.white,
+  },
+  amount: {
+    alignSelf: "stretch",
+    minHeight: 72,
+    fontFamily: fonts.bold,
+    fontSize: 56,
+    letterSpacing: -1,
+    fontVariant: ["tabular-nums"],
+    textAlign: "center",
+    color: colors.ink,
   },
   chipActive: { backgroundColor: colors.ink, borderColor: colors.ink },
   box: {

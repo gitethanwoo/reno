@@ -163,6 +163,25 @@ export function addDays(date: string, days: number) {
 }
 export const quoteTotal = (items: { cents: number }[]) =>
   items.reduce((sum, item) => sum + item.cents, 0);
+/** The deposit on a quote total at a whole percent, rounded to the cent. */
+export const depositFor = (cents: number, percent: number) =>
+  Math.round((cents * percent) / 100);
+/**
+ * The business name on the newest quote this person sent as a contractor,
+ * across their projects. The sample's quotes aren't theirs, so they're skipped.
+ */
+export function lastCompany(state: AppState) {
+  let latest: { at: string; company: string } | undefined;
+  for (const p of state.projects) {
+    if (p.isSample || roleIn(p, state) !== "contractor") continue;
+    for (const q of p.quotes) {
+      // Each quote's "Sent a quote" event shares its id and has the time.
+      const at = p.events.find((e) => e.id === q.id)?.at ?? "";
+      if (!latest || at > latest.at) latest = { at, company: q.company };
+    }
+  }
+  return latest?.company;
+}
 export function validDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
