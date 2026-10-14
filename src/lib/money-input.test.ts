@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { amountOf, cleanAmount, formatAmount } from "./money-input";
+import { amountOf, cleanAmount, editAmount, formatAmount } from "./money-input";
 
 describe("money input", () => {
   it("cleans typed and pasted text", () => {
@@ -22,6 +22,17 @@ describe("money input", () => {
   it("round-trips through the formatted text", () => {
     for (const raw of ["", "0.", "3", "1440.5", "999999.99"])
       expect(cleanAmount(formatAmount(raw))).toBe(raw);
+  });
+  it("never leaves Backspace stuck on formatting", () => {
+    // Typing and deleting at the end.
+    expect(editAmount("123", "$1234")).toBe("1234");
+    expect(editAmount("1234", "$1,23")).toBe("123");
+    expect(editAmount("1", "$")).toBe("");
+    // Backspace right after a comma deletes the digit before it.
+    expect(editAmount("1234", "$1234")).toBe("234");
+    expect(editAmount("1234567", "$1,234567")).toBe("123567");
+    // Deleting the "$" changes nothing, and that's fine.
+    expect(editAmount("1234", "1,234")).toBe("1234");
   });
   it("turns cents into a raw amount", () => {
     expect(amountOf(144000)).toBe("1440");

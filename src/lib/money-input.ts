@@ -19,6 +19,22 @@ export function formatAmount(raw: string) {
   return "$" + grouped + (cents === undefined ? "" : "." + cents);
 }
 
+/**
+ * The raw amount after the person edits its formatted text. Backspace on a
+ * "," only removes formatting, which would put the comma straight back and
+ * leave Backspace stuck, so it deletes the digit before the comma instead.
+ */
+export function editAmount(raw: string, text: string) {
+  const next = cleanAmount(text);
+  const shown = formatAmount(raw);
+  if (next !== raw || text.length !== shown.length - 1) return next;
+  let at = 0;
+  while (text[at] === shown[at]) at++;
+  return cleanAmount(
+    shown.slice(0, at).replace(/\d(\D*)$/, "$1") + text.slice(at),
+  );
+}
+
 /** Cents as a raw amount, without trailing ".00". */
 export const amountOf = (cents: number) =>
   cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
