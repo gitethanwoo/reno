@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { router } from "expo-router";
-import { Pressable, View } from "react-native";
+import { useDiscardGuard } from "@/lib/discard";
+import { Stack, router } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useStore, uid } from "@/state/store";
 import { Draft, validateDraft } from "@/domain/model";
@@ -8,11 +9,9 @@ import {
   Button,
   Card,
   Copy,
-  ErrorNote,
   Eyebrow,
   Field,
   Heading,
-  IconButton,
   Note,
   Screen,
   Segments,
@@ -32,77 +31,95 @@ export default function NewProject() {
   const update = (field: keyof Draft, value: string) =>
     setDraft((d) => ({ ...d, [field]: value }));
   const save = () => commit({ type: "save-draft", draft });
-  const next = () =>
-    task.run(async () => {
-      if (step === 1) validateDraft(draft);
-      await save();
-      setStep((n) => n + 1);
-    });
+  const [initial] = useState(() => JSON.stringify(state.draft));
+  const allowLeave = useDiscardGuard(
+    JSON.stringify(draft) !== initial,
+    (leave) =>
+      task.run(async () => {
+        await save();
+        leave();
+      }),
+  );
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
-        <View style={{ gap: 8 }}>
-          <Button
-            title={step === 3 ? "Create project" : "Continue"}
-            icon="arrow"
-            busy={task.busy}
-            onPress={
-              step === 3
-                ? () =>
-                    task.run(async () => {
-                      await save();
-                      await commit({
-                        type: "create-project",
-                        id,
-                        at: new Date().toISOString(),
-                      });
-                      router.replace({
-                        pathname: "/project/[id]",
-                        params: { id },
-                      });
-                    })
-                : next
-            }
-          />
-          <Button
-            title="Save draft & close"
-            variant="quiet"
-            disabled={task.busy}
-            onPress={() =>
-              task.run(async () => {
-                await save();
-                router.back();
-              })
-            }
-          />
-        </View>
+        step > 0 && (
+          <View style={{ gap: 8 }}>
+            <Button
+              title={step === 2 ? "Create project" : "Continue"}
+              icon="arrow"
+              busy={task.busy}
+              onPress={
+                step === 2
+                  ? () =>
+                      task.run(async () => {
+                        await save();
+                        await commit({
+                          type: "create-project",
+                          id,
+                          at: new Date().toISOString(),
+                        });
+                        allowLeave();
+                        router.replace({
+                          pathname: "/project/[id]",
+                          params: { id },
+                        });
+                      })
+                  : () =>
+                      task.run(async () => {
+                        validateDraft(draft);
+                        setStep(2);
+                      })
+              }
+            />
+            <Button
+              title="Save draft & close"
+              variant="quiet"
+              disabled={task.busy}
+              onPress={() =>
+                task.run(async () => {
+                  await save();
+                  allowLeave();
+                  router.back();
+                })
+              }
+            />
+          </View>
+        )
       }
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
+      <Stack.Screen
+        options={{
+          // Replaces the layout's Cancel with Back after the first step.
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={() => (step > 0 ? setStep((n) => n - 1) : router.back())}
+            >
+              <Text
+                style={{
+                  fontFamily: fonts.regular,
+                  fontSize: 17,
+                  color: colors.ink,
+                }}
+              >
+                {step > 0 ? "Back" : "Cancel"}
+              </Text>
+            </Pressable>
+          ),
         }}
-      >
-        <Eyebrow>
-          {step + 1} of 4 ·{" "}
-          {["The job", "The details", "The look", "Your work order"][step]}
-        </Eyebrow>
-        {step > 0 && (
-          <IconButton
-            name="back"
-            label="Previous step"
-            onPress={() => setStep((n) => n - 1)}
-          />
-        )}
-      </View>
+      />
+      <Eyebrow>
+        {step + 1} of 3 · {["The job", "The details", "The look"][step]}
+      </Eyebrow>
       <View style={{ height: 4, backgroundColor: colors.line }}>
         <View
           style={{
             height: 4,
-            width: `${(step + 1) * 25}%`,
+            width: `${((step + 1) / 3) * 100}%`,
             backgroundColor: colors.rust,
           }}
         />
@@ -127,7 +144,10 @@ export default function NewProject() {
                 key={type}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: draft.type === type }}
-                onPress={() => update("type", type)}
+                onPress={() => {
+                  update("type", type);
+                  setStep(1);
+                }}
                 style={{
                   width: "47%",
                   flexGrow: 1,
@@ -274,32 +294,23 @@ export default function NewProject() {
           <Copy tone="muted" style={{ fontSize: 13 }}>
             Up to 8 photos now. You can add more from the project page later.
           </Copy>
-        </>
-      )}
-      {step === 3 && (
-        <>
-          <Title sub="Check your work order. You can add to it later.">
-            Review and save
-          </Title>
           <Card>
-            <Eyebrow>{draft.type}</Eyebrow>
+            <Eyebrow>Your work order</Eyebrow>
             <Heading small>{draft.title}</Heading>
-            <Copy>{draft.scope}</Copy>
             <Copy tone="muted">
-              {draft.zip} · {draft.timing}
-              {draft.area ? " · " + draft.area + " sq ft" : ""}
-            </Copy>
-            <Copy tone="muted">
-              {plural(draft.photos.length, "photo")} attached
+              {[
+                draft.type,
+                draft.zip,
+                draft.timing,
+                draft.area && draft.area + " sq ft",
+                plural(draft.photos.length, "photo"),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </Copy>
           </Card>
-          <Note>
-            This saves your project. It does not request quotes or share your
-            details with contractors yet.
-          </Note>
         </>
       )}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }
