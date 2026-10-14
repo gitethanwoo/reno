@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   Copy,
-  ErrorNote,
   Eyebrow,
   Field,
   Heading,
@@ -40,6 +39,7 @@ export default function NewProject() {
     });
   return (
     <Screen
+      error={task.error}
       keyboard
       footer={
         <View style={{ gap: 8 }}>
@@ -299,7 +299,6 @@ export default function NewProject() {
           </Note>
         </>
       )}
-      <ErrorNote error={task.error} />
     </Screen>
   );
 }
