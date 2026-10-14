@@ -9,6 +9,7 @@ export type IconName =
   | "arrow"
   | "back"
   | "plus"
+  | "minus"
   | "check"
   | "bell"
   | "camera"
@@ -33,6 +34,7 @@ const paths: Partial<Record<IconName, string>> = {
   arrow: "M4 12h16m-6-6 6 6-6 6",
   back: "M20 12H4m6-6-6 6 6 6",
   plus: "M12 5v14M5 12h14",
+  minus: "M5 12h14",
   check: "m5 12 4 4L19 6",
   close: "m6 6 12 12M6 18 18 6",
   chevron: "m9 5 7 7-7 7",
