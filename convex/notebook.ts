@@ -13,6 +13,8 @@ import {
 import { reduce, type Action } from "../src/domain/reducer";
 import { initialState } from "../src/domain/seed";
 import { requireOwner } from "./ownership";
+import { commitNotice } from "./notify";
+import { schedulePush } from "./push";
 import * as values from "./validators";
 
 // Explicit first-release capacity: never truncate a financial or completion record.
@@ -397,6 +399,13 @@ export const commit = mutation({
     try {
       const next = validateState(reduce(before, action));
       await save(ctx, userId, next, before);
+      if ("projectId" in action)
+        await schedulePush(
+          ctx,
+          action.projectId,
+          userId,
+          commitNotice(before, next, action),
+        );
     } catch (error) {
       if (error instanceof ConvexError) throw error;
       throw new ConvexError(

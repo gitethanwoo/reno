@@ -29,6 +29,7 @@ describe('private notebook transactions', () => {
     await alice.mutation(api.notebook.initialize, {});
     await alice.mutation(api.notebook.initialize, {});
     expect(await bob.query(api.notebook.get, {})).toBeNull();
+    expect(await t.run(ctx => ctx.db.query('pushTokens').collect())).toEqual([]);
     await bob.mutation(api.notebook.initialize, {});
     await alice.mutation(api.notebook.commit, { action: { type: 'profile', name: 'Alice', role: 'homeowner' } });
     expect((await alice.query(api.notebook.get, {}))?.name).toBe('Alice');
@@ -229,6 +230,7 @@ describe('account deletion', () => {
     await bob.mutation(api.invites.accept, { token });
     await bob.mutation(api.notebook.commit, { action: quote(projectId, 'q1') });
 
+    await bob.mutation(api.push.register, { token: 'ExponentPushToken[bobphone]' });
     // The contractor leaves: the homeowner keeps the project and its record.
     await bob.run(async ctx => deleteAppData(ctx, (await ctx.auth.getUserIdentity())!.tokenIdentifier));
     expect(await bob.query(api.notebook.get, {})).toBeNull();

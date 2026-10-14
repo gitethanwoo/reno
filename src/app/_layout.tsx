@@ -17,6 +17,7 @@ import { StoreProvider, useStore } from "@/state/store";
 import { Button, Copy } from "@/components/ui";
 import { NameStep } from "@/components/name-step";
 import { colors, fonts } from "@/components/theme";
+import { PushObserver } from "@/lib/push";
 
 export { ErrorBoundary } from "expo-router";
 function Routes() {
@@ -45,6 +46,7 @@ function Routes() {
     );
   return (
     <>
+      <PushObserver />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.paper },

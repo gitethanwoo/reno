@@ -6,6 +6,7 @@ import { useProject } from "@/features/use-project";
 import { useSessionMode } from "@/state/session";
 import { contractorOf, type Project } from "@/domain/model";
 import { expiresIn, inviteUrl } from "@/lib/invite";
+import { useAskForPush } from "@/lib/push";
 import {
   Button,
   Card,
@@ -50,6 +51,8 @@ export default function Invite() {
   const create = useMutation(api.invites.create);
   const revoke = useMutation(api.invites.revoke);
   const task = useTask();
+  // Once the link is out, offer to say when the contractor joins.
+  const askForPush = useAskForPush();
   const [now] = useState(() => Date.now());
   if (!p)
     return (
@@ -82,6 +85,7 @@ export default function Invite() {
     task.run(async () => {
       const { token } = await create({ projectId: p.id });
       await shareLink(p, from, token);
+      await askForPush();
     });
   return (
     <Screen
@@ -93,7 +97,10 @@ export default function Invite() {
           disabled={offline}
           onPress={() =>
             open
-              ? task.run(() => shareLink(p, from, open.token))
+              ? task.run(async () => {
+                  await shareLink(p, from, open.token);
+                  await askForPush();
+                })
               : sendNew()
           }
         />
@@ -129,9 +136,7 @@ export default function Invite() {
         </Card>
       ) : (
         invite && (
-          <Note warning>
-            Your last link expired. Share a new one below.
-          </Note>
+          <Note warning>Your last link expired. Share a new one below.</Note>
         )
       )}
       <View style={{ gap: 4 }}>

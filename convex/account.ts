@@ -53,6 +53,11 @@ export async function deleteAppData(ctx: MutationCtx, userId: string) {
     await ctx.storage.delete(file.storageId);
     await ctx.db.delete(file._id);
   }
+  for (const row of await ctx.db
+    .query("pushTokens")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .take(100))
+    await ctx.db.delete(row._id);
   const notebook = await ctx.db
     .query("notebooks")
     .withIndex("by_ownerId", (q) => q.eq("ownerId", userId))

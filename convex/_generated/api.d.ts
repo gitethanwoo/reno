@@ -14,7 +14,9 @@ import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as invites from "../invites.js";
 import type * as notebook from "../notebook.js";
+import type * as notify from "../notify.js";
 import type * as ownership from "../ownership.js";
+import type * as push from "../push.js";
 import type * as validators from "../validators.js";
 
 import type {
@@ -30,7 +32,9 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   invites: typeof invites;
   notebook: typeof notebook;
+  notify: typeof notify;
   ownership: typeof ownership;
+  push: typeof push;
   validators: typeof validators;
 }>;
 

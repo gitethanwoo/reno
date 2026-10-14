@@ -47,6 +47,11 @@ export default defineSchema({
     "by_projectId_and_position",
     ["projectId", "position"],
   ),
+  // Expo push tokens. One user can have several devices; a token belongs to
+  // whoever registered it last on that device.
+  pushTokens: defineTable({ userId: v.string(), token: v.string() })
+    .index("by_userId", ["userId"])
+    .index("by_token", ["token"]),
   ownedFiles: defineTable({
     ownerId: v.string(),
     storageId: v.id("_storage"),
