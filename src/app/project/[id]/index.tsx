@@ -37,6 +37,7 @@ import {
   remaining,
   statusLabel,
   total,
+  type Photo,
   type Project,
 } from "@/domain/model";
 import { exportProject } from "@/lib/export-project";
@@ -59,6 +60,8 @@ export default function ProjectDetail() {
   const [focusRequest, setFocusRequest] = useState(0);
   const task = useTask();
   const photoTask = useTask();
+  // Picked photos show in the strip while they upload.
+  const [uploadingPhotos, setUploadingPhotos] = useState<Photo[]>([]);
   const [viewing, setViewing] = useState<number | null>(null);
   const [viewingThread, setViewingThread] = useState<number | null>(null);
   // The navigation bar shows the project's name once the big title has
@@ -126,14 +129,18 @@ export default function ProjectDetail() {
   const photosLeft = projectPhotoLimit - p.photos.length;
   const addProjectPhotos = () =>
     photoTask.run(async () => {
-      const picked = await addPhotos(photosLeft);
-      if (picked.length)
-        await commit({
-          type: "add-photos",
-          projectId: p.id,
-          photos: picked,
-          at: new Date().toISOString(),
-        });
+      try {
+        const picked = await addPhotos(photosLeft, setUploadingPhotos);
+        if (picked.length)
+          await commit({
+            type: "add-photos",
+            projectId: p.id,
+            photos: picked,
+            at: new Date().toISOString(),
+          });
+      } finally {
+        setUploadingPhotos([]);
+      }
     });
   const postUpdate = () => {
     router.setParams({ tab: "record" });
@@ -269,6 +276,11 @@ export default function ProjectDetail() {
         <>
           <PhotoStrip
             photos={photos}
+            uploading={uploadingPhotos.map((photo) => ({
+              id: photo.id,
+              source: photo.uri,
+              name: photo.name,
+            }))}
             onOpen={setViewing}
             add={
               complete

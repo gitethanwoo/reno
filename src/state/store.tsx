@@ -15,8 +15,15 @@ type Store = {
   loadError: string | null;
   commit: (action: Action) => Promise<void>;
   reload: () => void;
-  /** Pick up to `max` photos (camera or library), uploaded when signed in. */
-  addPhotos: (max: number) => Promise<Photo[]>;
+  /**
+   * Pick up to `max` photos (camera or library), uploaded when signed in.
+   * `onPicked` gets the on-device copies right away, so a screen can show
+   * them while they upload. The result keeps those local URIs for display.
+   */
+  addPhotos: (
+    max: number,
+    onPicked?: (photos: Photo[]) => void,
+  ) => Promise<Photo[]>;
 };
 const Context = createContext<Store | null>(null);
 function LocalStoreProvider({ children }: { children: React.ReactNode }) {
@@ -73,7 +80,11 @@ function LocalStoreProvider({ children }: { children: React.ReactNode }) {
           setReady(false);
           setAttempt((n) => n + 1);
         },
-        addPhotos: pickPhotos,
+        addPhotos: async (max, onPicked) => {
+          const photos = await pickPhotos(max);
+          if (photos.length) onPicked?.(photos);
+          return photos;
+        },
       }}
     >
       {children}
@@ -104,10 +115,15 @@ function CloudStoreProvider({ children }: { children: React.ReactNode }) {
       );
     }
   }, [result, initialize, attempt]);
-  async function addPhotos(max: number) {
+  async function addPhotos(max: number, onPicked?: (photos: Photo[]) => void) {
     const photos = await pickPhotos(max);
+    if (photos.length) onPicked?.(photos);
     return Promise.all(
-      photos.map(async (photo) => upload(await photoUpload(photo))),
+      photos.map(async (photo) => ({
+        ...(await upload(await photoUpload(photo))),
+        // The file is already on this phone; don't download it back to show it.
+        uri: photo.uri,
+      })),
     );
   }
   return (

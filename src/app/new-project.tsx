@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useKeyboardState } from "react-native-keyboard-controller";
 import { useStore, uid } from "@/state/store";
-import { Draft, validateDraft } from "@/domain/model";
+import { Draft, type Photo, validateDraft } from "@/domain/model";
 import {
   Button,
   Card,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui";
 import { colors, fonts } from "@/components/theme";
 import { Icon } from "@/components/icon";
+import { Uploading } from "@/components/photo-gallery";
 const MAX_DRAFT_PHOTOS = 8;
 export default function NewProject() {
   const { state, commit, addPhotos } = useStore();
@@ -30,6 +31,7 @@ export default function NewProject() {
   const [step, setStep] = useState(0);
   const task = useTask();
   const keyboardUp = useKeyboardState((k) => k.isVisible);
+  const [pending, setPending] = useState<Photo[]>([]);
   const [id] = useState(uid);
   const scopeField = useRef<FieldHandle>(null);
   const zipField = useRef<FieldHandle>(null);
@@ -250,7 +252,7 @@ export default function NewProject() {
           <Title sub="Photos of the space as it is now, plus any look you love. They make quotes more accurate.">
             Add photos
           </Title>
-          {draft.photos.length > 0 && (
+          {draft.photos.length + pending.length > 0 && (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {draft.photos.map((photo, i) => (
                 <View key={photo.id} style={{ width: "31.5%", aspectRatio: 1 }}>
@@ -288,23 +290,43 @@ export default function NewProject() {
                   </Pressable>
                 </View>
               ))}
+              {pending.map((photo) => (
+                <View key={photo.id} style={{ width: "31.5%", aspectRatio: 1 }}>
+                  <Image
+                    source={photo.uri}
+                    style={{ width: "100%", height: "100%", borderRadius: 10 }}
+                    contentFit="cover"
+                    accessibilityLabel={photo.name + ", uploading"}
+                  />
+                  <Uploading />
+                </View>
+              ))}
             </View>
           )}
           <Button
             title={draft.photos.length ? "Add more photos" : "Add photos"}
             icon="camera"
             variant="secondary"
-            disabled={draft.photos.length >= MAX_DRAFT_PHOTOS}
+            disabled={task.busy || draft.photos.length >= MAX_DRAFT_PHOTOS}
             onPress={() =>
+              // Picked photos show at once; Create waits for the upload.
               task.run(async () => {
-                const photos = await addPhotos(
-                  MAX_DRAFT_PHOTOS - draft.photos.length,
-                );
-                if (photos.length)
-                  setDraft((d) => ({
-                    ...d,
-                    photos: [...d.photos, ...photos].slice(0, MAX_DRAFT_PHOTOS),
-                  }));
+                try {
+                  const photos = await addPhotos(
+                    MAX_DRAFT_PHOTOS - draft.photos.length,
+                    setPending,
+                  );
+                  if (photos.length)
+                    setDraft((d) => ({
+                      ...d,
+                      photos: [...d.photos, ...photos].slice(
+                        0,
+                        MAX_DRAFT_PHOTOS,
+                      ),
+                    }));
+                } finally {
+                  setPending([]);
+                }
               })
             }
           />

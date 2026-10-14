@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { Photo } from "@/domain/model";
 import { uid, useStore } from "@/state/store";
 import { ErrorNote, useTask } from "./ui";
+import { Uploading } from "./photo-gallery";
 import { Icon } from "./icon";
 import { colors, fonts } from "./theme";
 
@@ -42,7 +43,9 @@ export function ThreadComposer({
     setPrefill(initial);
     if (initial) setText(initial);
   }
-  const ready = !!text.trim() || !!photo;
+  // The photo shows from the phone at once; Send waits until it's uploaded.
+  const uploading = photoTask.busy && !!photo;
+  const ready = (!!text.trim() || !!photo) && !uploading;
   const send = () => {
     if (!ready || task.busy) return;
     const value = text;
@@ -70,8 +73,19 @@ export function ThreadComposer({
   };
   const pick = () =>
     photoTask.run(async () => {
-      const [picked] = await addPhotos(1);
-      if (picked) setPhoto(picked);
+      let local: Photo | undefined;
+      const mine = (current?: Photo) => !!local && current?.id === local.id;
+      try {
+        const [picked] = await addPhotos(1, ([first]) => {
+          local = first;
+          setPhoto(first);
+        });
+        // Unless it was removed or replaced while uploading.
+        if (picked) setPhoto((current) => (mine(current) ? picked : current));
+      } catch (e) {
+        setPhoto((current) => (mine(current) ? undefined : current));
+        throw e;
+      }
     });
   return (
     <View style={{ gap: 10 }}>
@@ -88,6 +102,7 @@ export function ThreadComposer({
             contentFit="cover"
             style={{ width: 72, height: 72, borderRadius: 10 }}
           />
+          {uploading && <Uploading />}
           <View
             style={{
               position: "absolute",
@@ -124,7 +139,7 @@ export function ThreadComposer({
             backgroundColor: pressed ? colors.sage : "transparent",
           })}
         >
-          {photoTask.busy ? (
+          {photoTask.busy && !photo ? (
             <ActivityIndicator color={colors.ink} />
           ) : (
             <Icon name="camera" size={22} color={colors.muted} />

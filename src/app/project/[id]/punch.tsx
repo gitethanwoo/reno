@@ -4,7 +4,11 @@ import { Image } from "expo-image";
 import { useDiscardGuard } from "@/lib/discard";
 import { useProject } from "@/features/use-project";
 import { Photo } from "@/domain/model";
-import { PhotoViewer, type GalleryPhoto } from "@/components/photo-gallery";
+import {
+  PhotoViewer,
+  Uploading,
+  type GalleryPhoto,
+} from "@/components/photo-gallery";
 import { colors } from "@/components/theme";
 import {
   Badge,
@@ -23,12 +27,16 @@ import { Pressable, View } from "react-native";
 export default function Punch() {
   const { project: p, params, role, commit, addPhotos } = useProject();
   const task = useTask();
+  // Photos show from the phone at once and upload alongside.
+  const photoTask = useTask();
+  const [problemPreview, setProblemPreview] = useState<Photo>();
   const item = p?.punch.find((i) => i.id === params.itemId);
   const [note, setNote] = useState("");
   // Null until the homeowner edits, so the field shows the saved detail.
   const [detail, setDetail] = useState<string | null>(null);
   // The contractor's proof, sent with the fix.
   const [fixPhoto, setFixPhoto] = useState<Photo>();
+  const fixUploading = photoTask.busy && !!fixPhoto;
   const [viewing, setViewing] = useState<number | null>(null);
   const edited = !!item && detail !== null && detail.trim() !== item.note;
   const allowLeave = useDiscardGuard(edited || !!note.trim() || !!fixPhoto);
@@ -80,8 +88,9 @@ export default function Punch() {
       photo,
       at: new Date().toISOString(),
     }).then(() => setDetail(null));
+  const problem = problemPreview ?? item.photo;
   const photos: (GalleryPhoto & { label: string })[] = [
-    item.photo && { ...item.photo, label: "The problem" },
+    problem && { ...problem, label: "The problem" },
     item.fixPhoto && { ...item.fixPhoto, label: "The fix" },
   ]
     .filter((photo) => !!photo)
@@ -92,7 +101,7 @@ export default function Punch() {
       label: photo.label,
     }));
   return (
-    <Screen error={task.error}>
+    <Screen error={task.error ?? photoTask.error}>
       <View style={{ gap: 10 }}>
         <Badge warm={item.status !== "resolved"}>
           {item.status === "review"
@@ -144,6 +153,19 @@ export default function Punch() {
                   backgroundColor: colors.sage,
                 }}
               />
+              {problemPreview?.id === photo.id && (
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: photos.length > 1 ? 160 : 210,
+                  }}
+                >
+                  <Uploading radius={12} />
+                </View>
+              )}
               <Copy tone="muted" style={{ fontSize: 13 }}>
                 {photo.label}
               </Copy>
@@ -156,11 +178,17 @@ export default function Punch() {
           title={item.photo ? "Replace photo" : "Add a photo"}
           icon="camera"
           variant="secondary"
-          disabled={task.busy}
+          disabled={task.busy || photoTask.busy}
           onPress={() =>
-            task.run(async () => {
-              const [picked] = await addPhotos(1);
-              if (picked) await saveDetail(picked);
+            photoTask.run(async () => {
+              try {
+                const [picked] = await addPhotos(1, ([first]) =>
+                  setProblemPreview(first),
+                );
+                if (picked) await saveDetail(picked);
+              } finally {
+                setProblemPreview(undefined);
+              }
             })
           }
         />
@@ -192,12 +220,15 @@ export default function Punch() {
         />
       )}
       {!closed && canSubmit && fixPhoto && (
-        <Image
-          source={fixPhoto.uri}
-          accessibilityLabel="Photo of the fix"
-          contentFit="cover"
-          style={{ height: 210, width: "100%", borderRadius: 12 }}
-        />
+        <View>
+          <Image
+            source={fixPhoto.uri}
+            accessibilityLabel="Photo of the fix"
+            contentFit="cover"
+            style={{ height: 210, width: "100%", borderRadius: 12 }}
+          />
+          {fixUploading && <Uploading radius={12} />}
+        </View>
       )}
       {!closed && canSubmit && (
         <Button
@@ -206,11 +237,23 @@ export default function Punch() {
           }
           icon="camera"
           variant="secondary"
-          disabled={task.busy}
+          disabled={task.busy || photoTask.busy}
           onPress={() =>
-            task.run(async () => {
-              const [picked] = await addPhotos(1);
-              if (picked) setFixPhoto(picked);
+            photoTask.run(async () => {
+              let local: Photo | undefined;
+              const mine = (current?: Photo) =>
+                !!local && current?.id === local.id;
+              try {
+                const [picked] = await addPhotos(1, ([first]) => {
+                  local = first;
+                  setFixPhoto(first);
+                });
+                if (picked)
+                  setFixPhoto((current) => (mine(current) ? picked : current));
+              } catch (e) {
+                setFixPhoto((current) => (mine(current) ? undefined : current));
+                throw e;
+              }
             })
           }
         />
@@ -235,6 +278,7 @@ export default function Punch() {
         <Button
           title="Send for homeowner review"
           busy={task.busy}
+          disabled={fixUploading}
           onPress={() => act("review")}
         />
       )}

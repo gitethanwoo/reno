@@ -6,6 +6,7 @@ import { uid, useStore } from "@/state/store";
 import { ErrorNote, useTask } from "./ui";
 import { Icon } from "./icon";
 import { colors, fonts } from "./theme";
+import { Uploading } from "./photo-gallery";
 
 /**
  * The last row of the punch list: type an item, press Return, and the field
@@ -26,12 +27,20 @@ export function PunchComposer({
   const input = useRef<TextInput>(null);
   const [title, setTitle] = useState("");
   const [photo, setPhoto] = useState<Photo>();
+  // The photo shows from the phone at once; an item added meanwhile waits for its upload.
+  const upload = useRef<{ local: Photo; done: Promise<Photo | undefined> }>(
+    null,
+  );
   const submit = () => {
     const value = title.trim();
     if (!value) {
       input.current?.blur();
       return;
     }
+    const pending =
+      photo && upload.current?.local.id === photo.id
+        ? upload.current.done
+        : null;
     void task.run(async () => {
       // Clear right away so the next item can be typed while this one saves.
       setTitle("");
@@ -43,7 +52,7 @@ export function PunchComposer({
           id: uid(),
           title: value,
           note: "",
-          photo,
+          photo: pending ? await pending : photo,
           at: new Date().toISOString(),
         });
       } catch (e) {
@@ -55,9 +64,24 @@ export function PunchComposer({
   };
   const pick = () =>
     photoTask.run(async () => {
-      const [picked] = await addPhotos(1);
-      if (picked) setPhoto(picked);
-      input.current?.focus();
+      let local: Photo | undefined;
+      const mine = (current?: Photo) => !!local && current?.id === local.id;
+      const done = addPhotos(1, ([first]) => {
+        local = first;
+        setPhoto(first);
+        upload.current = { local: first, done };
+        input.current?.focus();
+      }).then(([picked]) => picked);
+      try {
+        const picked = await done;
+        // Unless it was removed, replaced or already added with an item.
+        if (picked) setPhoto((current) => (mine(current) ? picked : current));
+      } catch (e) {
+        setPhoto((current) => (mine(current) ? undefined : current));
+        throw e;
+      } finally {
+        if (upload.current?.done === done) upload.current = null;
+      }
     });
   return (
     <View style={{ gap: 8 }}>
@@ -125,6 +149,7 @@ export function PunchComposer({
               contentFit="cover"
               style={{ width: 40, height: 40, borderRadius: 8 }}
             />
+            {photoTask.busy && <Uploading radius={8} />}
             <View
               style={{
                 position: "absolute",

@@ -49,16 +49,20 @@ const MAX = 660;
  * optional "Add photos" tile at the end. Tapping a photo calls `onOpen`.
  */
 export function PhotoStrip({
-  photos,
+  photos: saved,
   onOpen,
   add,
+  uploading = [],
 }: {
   photos: GalleryPhoto[];
   onOpen: (index: number) => void;
   add?: { onPress: () => void; busy: boolean; left: number };
+  /** Photos shown from the phone while they upload, after the saved ones. */
+  uploading?: GalleryPhoto[];
 }) {
   const window = useWindowDimensions();
   const content = Math.min(window.width, MAX) - PAD * 2;
+  const photos = [...saved, ...uploading];
   if (!photos.length) return add ? <EmptyAdd {...add} /> : null;
   const width =
     photos.length === 1
@@ -81,6 +85,7 @@ export function PhotoStrip({
           accessibilityLabel={
             photo.name + ", photo " + (i + 1) + " of " + photos.length
           }
+          disabled={i >= saved.length}
           onPress={() => onOpen(i)}
         >
           <Image
@@ -95,6 +100,7 @@ export function PhotoStrip({
               backgroundColor: colors.sage,
             }}
           />
+          {i >= saved.length && <Uploading radius={14} />}
           {i === 0 && photos.length > 1 && (
             <View
               style={{
@@ -332,6 +338,28 @@ function ViewerPages({
         )}
         <View style={{ width: 40 }} />
       </View>
+    </View>
+  );
+}
+
+/** Dims a photo that's shown from the phone while it uploads. */
+export function Uploading({ radius = 10 }: { radius?: number }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: radius,
+        backgroundColor: "rgba(23, 51, 47, 0.45)",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <ActivityIndicator color={colors.white} accessibilityLabel="Uploading" />
     </View>
   );
 }

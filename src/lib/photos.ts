@@ -1,5 +1,6 @@
 import { ActionSheetIOS, Alert, Linking } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { Directory, File, Paths } from "expo-file-system";
 import { Photo } from "@/domain/model";
 import { colors } from "@/components/theme";
@@ -50,23 +51,37 @@ async function cameraAllowed() {
   return false;
 }
 
+/** Long edge for stored photos: sharp on a phone screen, a few hundred KB to upload. */
+const LONG_EDGE = 2048;
+
+/** A phone camera's full-size photo is several MB; shrink it before it's kept or uploaded. */
+async function shrink(uri: string) {
+  let image = await ImageManipulator.manipulate(uri).renderAsync();
+  if (Math.max(image.width, image.height) > LONG_EDGE)
+    image = await ImageManipulator.manipulate(image)
+      .resize(
+        image.width >= image.height
+          ? { width: LONG_EDGE }
+          : { height: LONG_EDGE },
+      )
+      .renderAsync();
+  return (await image.saveAsync({ compress: 0.7, format: SaveFormat.JPEG }))
+    .uri;
+}
+
 /** Keep a local copy so the photo survives the picker's temporary file. */
 async function keep(asset: ImagePicker.ImagePickerAsset): Promise<Photo> {
   const id = uid();
-  let uri = asset.uri;
+  const shrunk = await shrink(asset.uri);
+  let uri = shrunk;
   if (process.env.EXPO_OS !== "web") {
     const dir = new Directory(Paths.document, "project-photos");
     dir.create({ idempotent: true, intermediates: true });
-    const extension =
-      (asset.fileName?.split(".").pop() ?? "jpg").replace(
-        /[^a-zA-Z0-9]/g,
-        "",
-      ) || "jpg";
-    const file = new File(dir, id + "." + extension);
-    new File(asset.uri).copy(file);
+    const file = new File(dir, id + ".jpg");
+    await new File(shrunk).move(file);
     uri = file.uri;
   } else {
-    const blob = await (await fetch(asset.uri)).blob();
+    const blob = await (await fetch(shrunk)).blob();
     uri = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
