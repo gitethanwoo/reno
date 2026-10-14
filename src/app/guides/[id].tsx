@@ -1,13 +1,13 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 import { useStore } from "@/state/store";
 import { guides } from "@/features/guides";
 import {
-  Button,
   Copy,
   Empty,
   Eyebrow,
   Heading,
+  IconButton,
   Screen,
   useTask,
 } from "@/components/ui";
@@ -25,22 +25,20 @@ export default function Guide() {
         />
       </Screen>
     );
+  const saved = state.savedGuides.includes(id);
   return (
-    <Screen
-      error={task.error}
-      footer={
-        <Button
-          title={
-            state.savedGuides.includes(id)
-              ? "Saved to my library ✓"
-              : "Save to my library"
-          }
-          variant="secondary"
-          busy={task.busy}
-          onPress={() => task.run(() => commit({ type: "save-guide", id }))}
-        />
-      }
-    >
+    <Screen error={task.error}>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <IconButton
+              name={saved ? "bookmarked" : "bookmark"}
+              label={saved ? "Remove from my library" : "Save to my library"}
+              onPress={() => task.run(() => commit({ type: "save-guide", id }))}
+            />
+          ),
+        }}
+      />
       <Eyebrow>Reno field guide · {guide.minutes} min read</Eyebrow>
       <Heading>{guide.title}</Heading>
       <Copy tone="muted">{guide.subtitle}</Copy>

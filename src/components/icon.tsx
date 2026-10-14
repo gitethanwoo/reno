@@ -25,7 +25,9 @@ export type IconName =
   | "bath"
   | "paint"
   | "floor"
-  | "roof";
+  | "roof"
+  | "bookmark"
+  | "bookmarked";
 const paths: Partial<Record<IconName, string>> = {
   home: "M3 10L12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z",
   projects: "M3 7h7l2-3h8a1 1 0 0 1 1 1v15H3z",
@@ -51,6 +53,8 @@ const paths: Partial<Record<IconName, string>> = {
   paint: "M4 3h13v5H4zM17 5h3v6h-8v3M11 14h2v7h-2z",
   floor: "M3 3h18v18H3zM3 9h18M3 15h18M9 3v6M15 9v6M9 15v6",
   roof: "M2 12 12 4l10 8M5 10v10h14V10M10 20v-5h4v5",
+  bookmark: "M6 3h12v18l-6-4-6 4z",
+  bookmarked: "M6 3h12v18l-6-4-6 4z",
 };
 export function Icon({
   name,
@@ -78,7 +82,7 @@ export function Icon({
           <Path d="M4 21v-2a8 8 0 0 1 16 0v2" />
         </>
       ) : (
-        <Path d={paths[name]} />
+        <Path d={paths[name]} fill={name === "bookmarked" ? color : "none"} />
       )}
       {name === "camera" && <Circle cx="12" cy="13" r="3" />}
       {name === "projects" && (

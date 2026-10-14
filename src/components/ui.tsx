@@ -247,14 +247,31 @@ export function IconButton({
 export function Card({
   children,
   style,
+  onPress,
+  label,
 }: {
   children: React.ReactNode;
   style?: ViewStyle;
+  /** Makes the whole card one tap target, like a list cell. */
+  onPress?: () => void;
+  label?: string;
 }) {
-  return (
+  const card = (
     <Surface elevation={0} style={[s.card, style]}>
       {children}
     </Surface>
+  );
+  return onPress ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => pressed && { opacity: 0.7 }}
+    >
+      {card}
+    </Pressable>
+  ) : (
+    card
   );
 }
 export function Badge({

@@ -22,7 +22,9 @@ export default function Guides() {
   );
   return (
     <Screen>
-      <Title sub="Short, practical reads for each stage of a job.">Guides</Title>
+      <Title sub="Short, practical reads for each stage of a job.">
+        Guides
+      </Title>
       <Tabs
         value={tab}
         onChange={setTab}
@@ -35,17 +37,15 @@ export default function Guides() {
         <Card
           key={g.id}
           style={{ backgroundColor: i === 0 ? colors.lime : colors.white }}
+          label={g.title}
+          onPress={() =>
+            router.push({ pathname: "/guides/[id]", params: { id: g.id } })
+          }
         >
           <Eyebrow>Reno field guide · {g.minutes} min</Eyebrow>
           <Heading small>{g.title}</Heading>
           <Copy>{g.subtitle}</Copy>
-          <Row
-            title="Read the guide"
-            icon="book"
-            onPress={() =>
-              router.push({ pathname: "/guides/[id]", params: { id: g.id } })
-            }
-          />
+          <Row title="Read the guide" icon="book" />
         </Card>
       ))}
       {!visible.length && (
