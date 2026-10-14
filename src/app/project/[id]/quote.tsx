@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDiscardGuard } from "@/lib/discard";
 import { DateField } from "@/components/date-field";
 import { today } from "@/lib/date";
@@ -15,7 +15,7 @@ import {
   quoteTotal,
 } from "@/domain/model";
 import { useAskForPush } from "@/lib/push";
-import { amountOf, cleanAmount, formatAmount } from "@/lib/money-input";
+import { amountOf, editAmount, formatAmount } from "@/lib/money-input";
 import { Segmented } from "@/components/segmented";
 import { Stepper } from "@/components/stepper";
 import {
@@ -24,6 +24,7 @@ import {
   Checkbox,
   Empty,
   Field,
+  type FieldHandle,
   Heading,
   IconButton,
   LineItem,
@@ -70,6 +71,16 @@ export default function SendQuote() {
   const [start, setStart] = useState(previous?.start ?? today());
   const [days, setDays] = useState(previous?.durationDays ?? 1);
   const [cleanup, setCleanup] = useState(previous?.cleanup ?? true);
+  // Return walks the fields in reading order: name, then each line's item
+  // and amount. Keyed by line so it survives adding and removing lines.
+  const fields = useRef(new Map<string, FieldHandle>());
+  const field = (key: string) => (handle: FieldHandle | null) => {
+    if (handle) fields.current.set(key, handle);
+    else fields.current.delete(key);
+  };
+  const focus = (key: string) => fields.current.get(key)?.focus();
+  // A line added with the button opens ready to type.
+  const [added, setAdded] = useState<string>();
   const form = JSON.stringify({
     company,
     lines,
@@ -165,6 +176,10 @@ export default function SendQuote() {
         value={company}
         onChangeText={setCompany}
         maxLength={80}
+        autoCapitalize="words"
+        autoComplete="organization"
+        textContentType="organizationName"
+        onNext={() => focus(lines[0].key + ":label")}
       />
       <View style={{ gap: 12 }}>
         <Heading small>Line items</Heading>
@@ -175,6 +190,9 @@ export default function SendQuote() {
           >
             <View style={{ flex: 1.6 }}>
               <Field
+                ref={field(l.key + ":label")}
+                autoFocus={l.key === added}
+                onNext={() => focus(l.key + ":amount")}
                 label={"Item " + (i + 1)}
                 placeholder="e.g. Labor"
                 value={l.label}
@@ -184,12 +202,16 @@ export default function SendQuote() {
             </View>
             <View style={{ flex: 1 }}>
               <Field
+                ref={field(l.key + ":amount")}
+                onNext={
+                  lines[i + 1] && (() => focus(lines[i + 1].key + ":label"))
+                }
                 label="Amount"
                 placeholder="$0"
                 keyboardType="decimal-pad"
                 value={formatAmount(l.amount)}
                 onChangeText={(text) =>
-                  edit(l.key, { amount: cleanAmount(text) })
+                  edit(l.key, { amount: editAmount(l.amount, text) })
                 }
               />
             </View>
@@ -211,7 +233,11 @@ export default function SendQuote() {
             title="Add a line"
             icon="plus"
             variant="secondary"
-            onPress={() => setLines((all) => [...all, blank()])}
+            onPress={() => {
+              const line = blank();
+              setLines((all) => [...all, line]);
+              setAdded(line.key);
+            }}
           />
         )}
       </View>

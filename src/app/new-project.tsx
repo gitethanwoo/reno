@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDiscardGuard } from "@/lib/discard";
 import { Stack, router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
@@ -11,6 +11,7 @@ import {
   Copy,
   Eyebrow,
   Field,
+  type FieldHandle,
   Heading,
   Note,
   Screen,
@@ -28,6 +29,8 @@ export default function NewProject() {
   const [step, setStep] = useState(0);
   const task = useTask();
   const [id] = useState(uid);
+  const scopeField = useRef<FieldHandle>(null);
+  const zipField = useRef<FieldHandle>(null);
   const update = (field: keyof Draft, value: string) =>
     setDraft((d) => ({ ...d, [field]: value }));
   const save = () => commit({ type: "save-draft", draft });
@@ -177,8 +180,13 @@ export default function NewProject() {
             onChangeText={(v) => update("title", v)}
             placeholder="e.g. Kitchen backsplash"
             maxLength={80}
+            // Picking the job type leads straight here; coming Back to
+            // edit a name already typed doesn't reopen the keyboard.
+            autoFocus={!draft.title}
+            onNext={() => scopeField.current?.focus()}
           />
           <Field
+            ref={scopeField}
             label="What needs doing?"
             value={draft.scope}
             onChangeText={(v) => update("scope", v)}
@@ -190,19 +198,23 @@ export default function NewProject() {
             <View style={{ flex: 1 }}>
               <Field
                 label="Area (sq ft, optional)"
-                keyboardType="decimal-pad"
+                keyboardType="number-pad"
                 value={draft.area}
-                onChangeText={(v) => update("area", v)}
+                onChangeText={(v) => update("area", v.replace(/\D/g, ""))}
                 placeholder="35"
-                maxLength={8}
+                maxLength={6}
+                onNext={() => zipField.current?.focus()}
               />
             </View>
             <View style={{ flex: 1 }}>
               <Field
+                ref={zipField}
                 label="Home ZIP code"
                 keyboardType="number-pad"
+                autoComplete="postal-code"
+                textContentType="postalCode"
                 value={draft.zip}
-                onChangeText={(v) => update("zip", v)}
+                onChangeText={(v) => update("zip", v.replace(/\D/g, ""))}
                 maxLength={5}
                 placeholder="32084"
               />

@@ -85,7 +85,9 @@ export default function Account() {
           onBlur={saveName}
           onSubmitEditing={saveName}
           returnKeyType="done"
+          autoCapitalize="words"
           autoComplete="given-name"
+          textContentType="givenName"
           maxLength={50}
         />
         <View style={{ gap: 10 }}>

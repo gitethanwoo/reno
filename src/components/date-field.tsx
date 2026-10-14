@@ -19,6 +19,8 @@ export function DateField({ label, value, onChange }: DateFieldProps) {
       value={value}
       onChangeText={onChange}
       maxLength={10}
+      autoCorrect={false}
+      autoComplete="off"
     />
   );
 }

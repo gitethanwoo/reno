@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDiscardGuard } from "@/lib/discard";
 import { router } from "expo-router";
 import { useProject } from "@/features/use-project";
@@ -8,6 +8,7 @@ import {
   Button,
   Empty,
   Field,
+  type FieldHandle,
   Note,
   Title,
   Screen,
@@ -21,6 +22,8 @@ export default function Propose() {
   const [amount, setAmount] = useState("");
   const [days, setDays] = useState("0");
   const [id] = useState(uid);
+  const reasonField = useRef<FieldHandle>(null);
+  const daysField = useRef<FieldHandle>(null);
   const allowLeave = useDiscardGuard(
     !!title.trim() || !!reason.trim() || !!amount.trim(),
   );
@@ -68,8 +71,12 @@ export default function Propose() {
         onChangeText={setTitle}
         placeholder="e.g. Edge trim upgrade"
         maxLength={100}
+        // A blank compose sheet: start typing, like Mail.
+        autoFocus
+        onNext={() => reasonField.current?.focus()}
       />
       <Field
+        ref={reasonField}
         label="Why is it needed?"
         value={reason}
         onChangeText={setReason}
@@ -82,11 +89,15 @@ export default function Propose() {
         onChangeText={setAmount}
         keyboardType="decimal-pad"
         placeholder="0.00"
+        maxLength={10}
+        onNext={() => daysField.current?.focus()}
       />
       <Field
+        ref={daysField}
         label="Extra days"
         value={days}
-        onChangeText={setDays}
+        onChangeText={(v) => setDays(v.replace(/\D/g, ""))}
+        selectTextOnFocus
         keyboardType="number-pad"
         maxLength={3}
       />

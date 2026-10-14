@@ -93,7 +93,14 @@ export default function Payment() {
         Log a payment
       </Title>
       {suggestions.length > 0 && <Suggestions options={suggestions} />}
-      <AmountField label="Amount paid" value={amount} onChange={setAmount} />
+      <AmountField
+        label="Amount paid"
+        value={amount}
+        onChange={setAmount}
+        // Logging the amount is why this sheet opened; the suggestions
+        // above it stay in view.
+        autoFocus
+      />
       <DateField
         label="Date paid"
         value={date}
