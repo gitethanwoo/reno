@@ -94,6 +94,15 @@ function Routes() {
         options={{ title: "Finish project" }}
       />
       <Stack.Screen
+        name="project/[id]/invite"
+        options={{ title: "Invite contractor" }}
+      />
+      <Stack.Screen
+        name="project/[id]/quote"
+        options={{ title: "Send a quote", presentation: "modal" }}
+      />
+      <Stack.Screen name="join/[token]" options={{ title: "Join a project" }} />
+      <Stack.Screen
         name="guides/[id]"
         options={{ title: "Reno field guide" }}
       />

@@ -14,7 +14,7 @@ import {
   Title,
   plural,
 } from "@/components/ui";
-import { money } from "@/domain/model";
+import { money, roleIn } from "@/domain/model";
 import { colors } from "@/components/theme";
 import { ProjectCard } from "@/components/project-card";
 import { Icon } from "@/components/icon";
@@ -22,15 +22,18 @@ export default function Home() {
   const { state } = useStore();
   const contractor = state.role === "contractor";
   const active = state.projects.filter((p) => p.status !== "completed");
-  const pendingProject = active.find((p) =>
-    p.changes.some((c) => c.status === "pending"),
+  // Only projects where the viewer is the homeowner have decisions waiting on them.
+  const pendingProject = active.find(
+    (p) =>
+      roleIn(p, state) === "homeowner" &&
+      p.changes.some((c) => c.status === "pending"),
   );
   const pending = pendingProject?.changes.find((c) => c.status === "pending");
   return (
     <Screen>
       <Title
         sub={
-          pending && !contractor
+          pending
             ? "One decision is waiting for you."
             : contractor
               ? "Your jobs, updates and changes in one place."
@@ -39,7 +42,7 @@ export default function Home() {
       >
         {"Hello, " + (state.name || "there") + "."}
       </Title>
-      {pendingProject && pending && !contractor && (
+      {pendingProject && pending && (
         <Card style={{ backgroundColor: colors.amber, borderColor: "#E7CFB0" }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Icon name="bell" size={20} />

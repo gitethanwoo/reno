@@ -18,7 +18,7 @@ import {
   useTask,
 } from "@/components/ui";
 export default function ChangeReview() {
-  const { project: p, params, state, commit } = useProject();
+  const { project: p, params, role, commit } = useProject();
   const task = useTask();
   const c = p?.changes.find((c) => c.id === params.changeId) ?? p?.changes[0];
   if (!p || !c)
@@ -44,7 +44,7 @@ export default function ChangeReview() {
   return (
     <Screen
       footer={
-        pending && state.role === "homeowner" ? (
+        pending && role === "homeowner" ? (
           <View style={{ gap: 8 }}>
             <Button
               title="Approve change"
@@ -92,7 +92,7 @@ export default function ChangeReview() {
       <View style={{ gap: 10 }}>
         <Badge warm={pending}>
           {pending
-            ? state.role === "homeowner"
+            ? role === "homeowner"
               ? "Waiting for your decision"
               : "Waiting for the homeowner"
             : c.status === "approved"

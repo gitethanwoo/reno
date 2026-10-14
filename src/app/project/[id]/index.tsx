@@ -24,7 +24,9 @@ import {
 import { kitchen } from "@/components/project-card";
 import { colors, fonts } from "@/components/theme";
 import {
+  contractorOf,
   dateLabel,
+  latestQuote,
   money,
   paid,
   remaining,
@@ -32,11 +34,13 @@ import {
   total,
 } from "@/domain/model";
 import { exportProject } from "@/lib/export-project";
+import { expiresIn } from "@/lib/invite";
 import { Icon } from "@/components/icon";
 
 export default function ProjectDetail() {
-  const { project: p, state, params } = useProject();
+  const { project: p, state, params, role } = useProject();
   const [tab, setTab] = useState(params.tab ?? "overview");
+  const [now] = useState(() => Date.now());
   const task = useTask();
   if (!p)
     return (
@@ -47,6 +51,7 @@ export default function ProjectDetail() {
         />
       </Screen>
     );
+  const inviteExpiry = p.invite ? expiresIn(p.invite.expiresAt, now) : null;
   const go = (
     screen:
       | "change"
@@ -56,15 +61,29 @@ export default function ProjectDetail() {
       | "quotes"
       | "terms"
       | "propose"
-      | "complete",
+      | "complete"
+      | "invite"
+      | "quote",
     extras = {},
   ) =>
     router.push({
       pathname: `/project/[id]/${screen}` as const,
       params: { id: p.id, ...extras },
     });
-  const homeowner = state.role === "homeowner",
-    complete = p.status === "completed";
+  const homeowner = role === "homeowner",
+    complete = p.status === "completed",
+    planning = p.status === "planning";
+  const contractor = contractorOf(p);
+  const latest = latestQuote(p);
+  // The sample notebook has no server membership, so name its two sides here.
+  const members =
+    p.members ??
+    (p.isSample
+      ? [
+          { name: state.name || "You", role: "homeowner" as const },
+          { name: "Alex · Coastal Tile", role: "contractor" as const },
+        ]
+      : []);
   const pending = p.changes.filter((c) => c.status === "pending");
   const openPunch = p.punch.filter((i) => i.status !== "resolved");
   const pendingCents = pending.reduce((sum, c) => sum + c.cents, 0);
@@ -125,7 +144,11 @@ export default function ProjectDetail() {
               <Copy tone="muted" style={{ fontSize: 12 }}>
                 Approved total
               </Copy>
-              <Copy style={{ fontFamily: fonts.bold, fontSize: 25 }}>
+              <Copy
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ fontFamily: fonts.bold, fontSize: 22 }}
+              >
                 {p.quote ? money(total(p)) : "—"}
               </Copy>
             </Card>
@@ -133,7 +156,11 @@ export default function ProjectDetail() {
               <Copy tone="muted" style={{ fontSize: 12 }}>
                 Finish date
               </Copy>
-              <Copy style={{ fontFamily: fonts.bold, fontSize: 25 }}>
+              <Copy
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ fontFamily: fonts.bold, fontSize: 22 }}
+              >
                 {p.finish ? dateLabel(p.finish) : "TBD"}
               </Copy>
             </Card>
@@ -146,18 +173,97 @@ export default function ProjectDetail() {
               {p.timing}
             </Copy>
           </View>
-          {p.status === "planning" && (
+          {planning && !homeowner && (
+            <Card style={{ backgroundColor: colors.amber }}>
+              <Eyebrow>Your move</Eyebrow>
+              <Heading small>
+                {latest ? "Send a revised quote" : "Send your quote"}
+              </Heading>
+              <Copy>
+                {latest
+                  ? "Your quote for " +
+                    money(latest.cents) +
+                    " is with the homeowner. Send a new version if the scope or price changed."
+                  : "List the work line by line, with your deposit, start date and schedule."}
+              </Copy>
+              <Button
+                title={latest ? "Revise quote" : "Write a quote"}
+                variant="secondary"
+                icon="arrow"
+                onPress={() => go("quote")}
+              />
+            </Card>
+          )}
+          {planning && homeowner && latest && (
+            <Card style={{ backgroundColor: colors.amber }}>
+              <Eyebrow>Your decision, next</Eyebrow>
+              <Heading small>A quote is ready</Heading>
+              <Copy>
+                {latest.company} · {money(latest.cents)} ·{" "}
+                {plural(latest.durationDays, "day")}
+              </Copy>
+              <Button
+                title="Review quote"
+                variant="secondary"
+                icon="arrow"
+                onPress={() => go("quotes")}
+              />
+            </Card>
+          )}
+          {planning && homeowner && !latest && (
             <Note>
-              Your project is saved. Contractor matching and live estimates are
-              coming next; nothing has been sent to a contractor.
+              {contractor
+                ? contractor.name +
+                  " has joined this project. Their quote will appear here when they send it."
+                : "Your project is saved. Invite your contractor so they can see the scope and send a quote here. Nothing is shared until you do."}
             </Note>
+          )}
+          {(members.length > 0 || (homeowner && !p.isSample)) && (
+            <Card style={{ gap: 0, paddingVertical: 4 }}>
+              {members.map((m, i) => (
+                <View
+                  key={m.role + m.name}
+                  style={{
+                    borderTopWidth: i ? 1 : 0,
+                    borderTopColor: colors.line,
+                  }}
+                >
+                  <Row
+                    title={m.name}
+                    detail={m.role === "homeowner" ? "Homeowner" : "Contractor"}
+                    icon={m.role === "homeowner" ? "home" : "tools"}
+                  />
+                </View>
+              ))}
+              {homeowner && !p.isSample && !contractor && !complete && (
+                <View
+                  style={{
+                    borderTopWidth: members.length ? 1 : 0,
+                    borderTopColor: colors.line,
+                  }}
+                >
+                  <Row
+                    title="Invite your contractor"
+                    detail={
+                      inviteExpiry
+                        ? "Link sent · expires " + inviteExpiry
+                        : p.invite
+                          ? "Your link expired · send a new one"
+                          : "Text them a link to join"
+                    }
+                    icon="user"
+                    onPress={() => go("invite")}
+                  />
+                </View>
+              )}
+            </Card>
           )}
           <Card>
             <Row
               title={p.quotes.length ? "Quote & contractor" : "Quotes"}
               detail={
                 p.quotes.length
-                  ? p.quotes.length + " quotes on record"
+                  ? plural(p.quotes.length, "quote") + " on record"
                   : "No quotes yet"
               }
               icon="file"
@@ -336,8 +442,7 @@ export default function ProjectDetail() {
           {p.punch.length ? (
             <View style={{ gap: 10 }}>
               <Copy tone="muted">
-                {p.punch.length - openPunch.length} of {p.punch.length}{" "}
-                resolved
+                {p.punch.length - openPunch.length} of {p.punch.length} resolved
               </Copy>
               <View
                 style={{

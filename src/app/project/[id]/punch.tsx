@@ -19,7 +19,7 @@ import {
 } from "@/components/ui";
 import { View } from "react-native";
 export default function Punch() {
-  const { project: p, params, state, commit } = useProject();
+  const { project: p, params, role, commit } = useProject();
   const task = useTask();
   const item = p?.punch.find((i) => i.id === params.itemId);
   const [title, setTitle] = useState("");
@@ -89,7 +89,7 @@ export default function Punch() {
         <ErrorNote error={task.error} />
       </Screen>
     );
-  const homeowner = state.role === "homeowner",
+  const homeowner = role === "homeowner",
     closed = p.status === "completed";
   // Who can act on the item right now, and how.
   const canReview = homeowner && item.status === "review";

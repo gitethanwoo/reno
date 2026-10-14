@@ -27,7 +27,9 @@ export default function Projects() {
       ) : (
         <Empty
           title={
-            filter === "completed" ? "No completed projects yet." : "No active projects."
+            filter === "completed"
+              ? "No completed projects yet."
+              : "No active projects."
           }
           text={
             filter === "completed"

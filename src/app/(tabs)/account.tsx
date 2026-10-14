@@ -50,8 +50,8 @@ export default function Account() {
             ]}
           />
           <Copy tone="muted" style={{ fontSize: 13, lineHeight: 19 }}>
-            Switches your own notebook between the two sides of a job. It does
-            not give access to anyone else’s projects.
+            Switches the sample project between the homeowner and contractor
+            views. On real projects, your role comes from how you joined.
           </Copy>
         </View>
         <Button

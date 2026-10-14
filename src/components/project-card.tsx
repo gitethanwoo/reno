@@ -1,12 +1,37 @@
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, View } from "react-native";
-import { Project, money, statusLabel, total } from "@/domain/model";
+import {
+  Project,
+  contractorOf,
+  money,
+  roleIn,
+  statusLabel,
+  total,
+} from "@/domain/model";
+import { useStore } from "@/state/store";
 import { Badge, Copy, Heading } from "./ui";
 import { colors, fonts } from "./theme";
 import { Icon } from "./icon";
 export const kitchen = require("@/assets/brand/kitchen.png");
 export function ProjectCard({ project: p }: { project: Project }) {
+  const { state } = useStore();
+  const planning = p.status === "planning";
+  const contractor = contractorOf(p);
+  const line =
+    roleIn(p, state) === "contractor"
+      ? "You’re the contractor" +
+        (planning
+          ? p.quotes.length
+            ? " · Quote sent"
+            : " · Waiting for your quote"
+          : "")
+      : (p.quote?.company ??
+        (planning && p.quotes.length
+          ? "Quote ready to review"
+          : contractor
+            ? contractor.name + " · Waiting for a quote"
+            : "Scope saved · Ready when you are"));
   return (
     <Pressable
       accessibilityRole="button"
@@ -67,7 +92,7 @@ export function ProjectCard({ project: p }: { project: Project }) {
           <Icon name="arrow" />
         </View>
         <Copy tone="muted" style={{ fontSize: 13 }}>
-          {p.quote?.company ?? "Scope saved · Ready when you are"}
+          {line}
           {p.isSample ? " · Sample" : ""}
         </Copy>
         {p.quote && (
