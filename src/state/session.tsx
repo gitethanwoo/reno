@@ -1,7 +1,9 @@
 import React, { createContext, use, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { Image } from "expo-image";
-import { ConvexReactClient } from "convex/react";
+import { useGlobalSearchParams, useSegments } from "expo-router";
+import { ConvexReactClient, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
   ConvexBetterAuthProvider,
   type AuthClient,
@@ -32,6 +34,22 @@ function Gate({ children }: { children: React.ReactNode }) {
   const task = useTask();
   const browserPreview = Platform.OS === "web";
   const secured = !!session.data && !!keys.data?.length;
+  // Opened from an invite link while signed out: say who it's from. The
+  // route stays put underneath, so signing in lands on the join screen.
+  const segments = useSegments();
+  const { token } = useGlobalSearchParams<{ token?: string }>();
+  const inviteToken =
+    !secured && segments[0] === "join" && typeof token === "string"
+      ? token
+      : null;
+  const invite = useQuery(
+    api.invites.welcome,
+    inviteToken ? { token: inviteToken } : "skip",
+  );
+  // iOS reports "no passkey for Reno" and "the person closed the sheet" as
+  // the same cancellation, on purpose. So Continue always creates a passkey
+  // and returning people sign in separately; guessing would risk making a
+  // second account for someone who only cancelled.
   async function register() {
     if (!session.data) {
       const result = await authClient.signIn.anonymous();
@@ -47,6 +65,17 @@ function Gate({ children }: { children: React.ReactNode }) {
       );
     await keys.refetch();
     await session.refetch();
+  }
+  async function signIn() {
+    const result = await authClient.signIn.passkey();
+    if (result?.error)
+      throw new Error(
+        "code" in result.error && result.error.code === "ERROR_CEREMONY_ABORTED"
+          ? "No passkey was used. New to Reno? Tap Continue to create one."
+          : result.error.message || "Sign-in didn't finish. Please try again.",
+      );
+    await session.refetch();
+    await keys.refetch();
   }
   if (preview || secured)
     return (
@@ -77,32 +106,34 @@ function Gate({ children }: { children: React.ReactNode }) {
         style={{ width: "100%", height: 250 }}
       />
       <View style={{ paddingHorizontal: 24, gap: 18 }}>
-        <Heading display>Your home.{"\n"}Your say.</Heading>
-        <Copy>
-          One clear record, from the first idea to the final walkthrough.
-        </Copy>
+        {invite ? (
+          <>
+            <Heading display>Join {invite.title}</Heading>
+            <Copy>
+              Invited by {invite.homeowner}. Create a passkey to see the scope,
+              photos and record, and send your quote.
+            </Copy>
+          </>
+        ) : (
+          <>
+            <Heading display>Your home.{"\n"}Your say.</Heading>
+            <Copy>
+              One clear record, from the first idea to the final walkthrough.
+            </Copy>
+          </>
+        )}
         <Button
-          title="Create my passkey"
+          title="Continue"
           icon="arrow"
           busy={task.busy}
           disabled={browserPreview}
           onPress={() => task.run(register)}
         />
         <Button
-          title="Sign in with a passkey"
-          variant="secondary"
+          title="I already have an account"
+          variant="quiet"
           disabled={task.busy || browserPreview}
-          onPress={() =>
-            task.run(async () => {
-              const result = await authClient.signIn.passkey();
-              if (result?.error)
-                throw new Error(
-                  result.error.message || "Sign-in was cancelled.",
-                );
-              await session.refetch();
-              await keys.refetch();
-            })
-          }
+          onPress={() => task.run(signIn)}
         />
         <ErrorNote error={task.error} />
         {browserPreview && (
