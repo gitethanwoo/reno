@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useSessionMode } from "@/state/session";
 import { expiresIn } from "@/lib/invite";
+import { useAskForPush } from "@/lib/push";
 import {
   Button,
   Card,
@@ -31,6 +32,8 @@ export default function Join() {
   const found = joining ?? live;
   const accept = useMutation(api.invites.accept);
   const task = useTask();
+  // After joining, offer to say when the homeowner answers.
+  const askForPush = useAskForPush();
   const expiry =
     found?.status === "ok" ? expiresIn(found.expiresAt, now) : null;
   const open = found?.status === "ok" && expiry !== null;
@@ -89,6 +92,7 @@ export default function Join() {
                 pathname: "/project/[id]",
                 params: { id: projectId },
               });
+              void askForPush();
             })
           }
         />

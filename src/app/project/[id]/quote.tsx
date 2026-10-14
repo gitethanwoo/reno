@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
 import { latestQuote, money, parseMoney, quoteTotal } from "@/domain/model";
+import { useAskForPush } from "@/lib/push";
 import {
   Button,
   Card,
@@ -38,6 +39,8 @@ const wholeNumber = (value: string, message: string) => {
 export default function SendQuote() {
   const { project: p, state, role, commit } = useProject();
   const task = useTask();
+  // After quoting, offer to say when the homeowner decides.
+  const askForPush = useAskForPush();
   // A revision starts from the version the homeowner already has.
   const previous = p ? latestQuote(p) : undefined;
   const [id] = useState(uid);
@@ -122,6 +125,7 @@ export default function SendQuote() {
         at: new Date().toISOString(),
       });
       router.back();
+      void askForPush();
     });
   const live = quoteTotal(lines.map((l) => ({ cents: centsOf(l.amount) })));
   return (

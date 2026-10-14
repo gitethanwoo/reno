@@ -1,5 +1,6 @@
 import { authClient } from "@/lib/auth-client";
 import { useSessionMode } from "@/state/session";
+import { useForgetPush } from "@/lib/push";
 import { useState } from "react";
 import { useStore } from "@/state/store";
 import { Role } from "@/domain/model";
@@ -22,6 +23,7 @@ export default function Account() {
   const [name, setName] = useState(state.name);
   const [role, setRole] = useState<Role>(state.role);
   const task = useTask();
+  const forgetPush = useForgetPush();
   const [saved, setSaved] = useState(false);
   return (
     <Screen keyboard>
@@ -79,7 +81,10 @@ export default function Account() {
           onPress={() =>
             task.run(async () => {
               if (preview) exitPreview();
-              else await authClient.signOut();
+              else {
+                await forgetPush();
+                await authClient.signOut();
+              }
             })
           }
         />
