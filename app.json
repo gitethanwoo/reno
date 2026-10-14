@@ -52,7 +52,8 @@
           "cameraPermission": "Allow Reno to take photos of your project.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "./plugins/with-scene-delegate"
     ],
     "experiments": {
       "typedRoutes": true,
