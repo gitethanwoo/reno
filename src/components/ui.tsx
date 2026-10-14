@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
+  ScrollViewProps,
   StyleSheet,
   Text,
   TextInput,
@@ -111,6 +112,8 @@ export function Screen({
   keyboard = false,
   padded = true,
   error = null,
+  scrollRef,
+  scroll,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -118,6 +121,16 @@ export function Screen({
   error?: string | null;
   keyboard?: boolean;
   padded?: boolean;
+  scrollRef?: React.Ref<ScrollView>;
+  /** Scroll events, for screens that follow their own position (a thread, a collapsing title). */
+  scroll?: Pick<
+    ScrollViewProps,
+    | "onScroll"
+    | "onContentSizeChange"
+    | "onLayout"
+    | "onScrollBeginDrag"
+    | "keyboardDismissMode"
+  >;
 }) {
   const inset = useSafeAreaInsets();
   return (
@@ -129,6 +142,9 @@ export function Screen({
       keyboardVerticalOffset={100}
     >
       <ScrollView
+        ref={scrollRef}
+        {...scroll}
+        scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{

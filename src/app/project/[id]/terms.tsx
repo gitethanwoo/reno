@@ -44,9 +44,9 @@ export default function Terms() {
           title="Edit and send"
           variant="secondary"
           onPress={() =>
-            router.push({
-              pathname: "/project/[id]/update",
-              params: { id: p.id, text: question },
+            router.dismissTo({
+              pathname: "/project/[id]",
+              params: { id: p.id, tab: "record", text: question },
             })
           }
         />

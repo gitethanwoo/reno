@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Stack, router } from "expo-router";
-import { View } from "react-native";
-import { Image } from "expo-image";
+import { ScrollView, View } from "react-native";
 import { useProject } from "@/features/use-project";
 import {
   Badge,
@@ -41,15 +40,42 @@ import {
 } from "@/domain/model";
 import { exportProject } from "@/lib/export-project";
 import { useInvite } from "@/features/use-invite";
-import { Icon } from "@/components/icon";
 import { PunchComposer } from "@/components/punch-composer";
+import { ThreadComposer } from "@/components/thread-composer";
+import { ProjectThread, threadPhotos } from "@/components/project-thread";
+import { ActionMenu, MenuAction } from "@/components/action-menu";
 
 export default function ProjectDetail() {
   const { project: p, state, params, role, commit, addPhotos } = useProject();
-  const [tab, setTab] = useState(params.tab ?? "overview");
+  // The tab lives in the route so links (a push, "Ask a question") can open
+  // the thread on a screen that is already mounted.
+  const tab = params.tab ?? "overview";
+  const setTab = (next: string) => {
+    setFocusRequest(0);
+    router.setParams({ tab: next });
+  };
+  // Counts "Post an update" picks from the menu; each one focuses the composer.
+  const [focusRequest, setFocusRequest] = useState(0);
   const task = useTask();
   const photoTask = useTask();
   const [viewing, setViewing] = useState<number | null>(null);
+  const [viewingThread, setViewingThread] = useState<number | null>(null);
+  // The navigation bar shows the project's name once the big title has
+  // scrolled up under it.
+  const [titleBottom, setTitleBottom] = useState(0);
+  const [titled, setTitled] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  // The thread keeps its newest message in view, like Messages, until the
+  // person scrolls back through it.
+  const stuck = useRef(false);
+  const shownTab = useRef<string | null>(null);
+  const toBottom = () => {
+    if (shownTab.current !== tab) {
+      shownTab.current = tab;
+      stuck.current = tab === "record";
+    }
+    if (stuck.current) scroll.current?.scrollToEnd({ animated: false });
+  };
   if (!p)
     return (
       <Screen>
@@ -63,7 +89,6 @@ export default function ProjectDetail() {
     screen:
       | "change"
       | "payment"
-      | "update"
       | "punch"
       | "quotes"
       | "terms"
@@ -95,6 +120,8 @@ export default function ProjectDetail() {
   const openPunch = p.punch.filter((i) => i.status !== "resolved");
   const pendingCents = pending.reduce((sum, c) => sum + c.cents, 0);
   const photos = galleryPhotos(p);
+  const postedPhotos = threadPhotos(p);
+  const record = tab === "record";
   const photosLeft = projectPhotoLimit - p.photos.length;
   const addProjectPhotos = () =>
     photoTask.run(async () => {
@@ -107,10 +134,118 @@ export default function ProjectDetail() {
           at: new Date().toISOString(),
         });
     });
+  const postUpdate = () => {
+    router.setParams({ tab: "record" });
+    setFocusRequest((n) => n + 1);
+  };
+  // The "+" menu gathers what this side can do right now; each entry follows
+  // the same rule as its button further down the screen.
+  const actions: MenuAction[] = [
+    ...(planning && !homeowner
+      ? [
+          {
+            title: latest ? "Revise quote" : "Write a quote",
+            icon: "file" as const,
+            onPress: () => go("quote"),
+          },
+        ]
+      : []),
+    ...(!homeowner && p.status === "active"
+      ? [
+          {
+            title: "Propose a change",
+            icon: "file" as const,
+            onPress: () => go("propose"),
+          },
+        ]
+      : []),
+    ...(!complete
+      ? [
+          {
+            title: "Post an update",
+            icon: "message" as const,
+            onPress: postUpdate,
+          },
+        ]
+      : []),
+    ...(homeowner && !complete
+      ? [
+          {
+            title: "Add a punch item",
+            icon: "tools" as const,
+            onPress: () => setTab("punch"),
+          },
+        ]
+      : []),
+    ...(homeowner && p.status === "active" && remaining(p) > 0
+      ? [
+          {
+            title: "Log a payment",
+            icon: "money" as const,
+            onPress: () => go("payment"),
+          },
+        ]
+      : []),
+    ...(!complete && photosLeft > 0
+      ? [
+          {
+            title: "Add photos",
+            icon: "camera" as const,
+            onPress: () => {
+              // The new photos show in the overview strip.
+              setTab("overview");
+              void addProjectPhotos();
+            },
+          },
+        ]
+      : []),
+  ];
   return (
-    <Screen>
-      <Stack.Screen options={{ title: "" }} />
-      <View style={{ gap: 10 }}>
+    <Screen
+      scrollRef={scroll}
+      keyboard={record}
+      scroll={{
+        keyboardDismissMode: record ? "on-drag" : undefined,
+        onScroll: (e) =>
+          setTitled(
+            titleBottom > 0 && e.nativeEvent.contentOffset.y > titleBottom,
+          ),
+        onContentSizeChange: toBottom,
+        // The keyboard or an attached photo shortens the view; keep the
+        // newest message above the composer.
+        onLayout: toBottom,
+        onScrollBeginDrag: () => {
+          stuck.current = false;
+        },
+      }}
+      footer={
+        record && !complete ? (
+          <ThreadComposer
+            projectId={p.id}
+            initial={params.text}
+            autoFocus={!!params.text}
+            focusRequest={focusRequest}
+            onSent={() => {
+              stuck.current = true;
+            }}
+          />
+        ) : undefined
+      }
+    >
+      <Stack.Screen
+        options={{
+          title: titled ? p.title : "",
+          headerRight: actions.length
+            ? () => <ActionMenu label="Add to this project" actions={actions} />
+            : undefined,
+        }}
+      />
+      <View
+        style={{ gap: 10 }}
+        onLayout={(e) =>
+          setTitleBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)
+        }
+      >
         <View style={{ flexDirection: "row", gap: 8 }}>
           <Badge>{statusLabel(p)}</Badge>
           {p.isSample && <Badge warm>Sample project</Badge>}
@@ -312,68 +447,19 @@ export default function ProjectDetail() {
           )}
         </>
       )}
-      {tab === "record" && (
+      {record && (
         <>
-          {!complete && (
-            <Button
-              title="Post an update"
-              icon="plus"
-              onPress={() => go("update")}
-            />
+          <ProjectThread
+            p={p}
+            members={members}
+            role={role}
+            onOpenPhoto={(id) =>
+              setViewingThread(postedPhotos.findIndex((i) => i.id === id))
+            }
+          />
+          {complete && (
+            <Note>This project is complete. Its record is read-only.</Note>
           )}
-          {p.events.map((event) => (
-            <View key={event.id} style={{ flexDirection: "row", gap: 14 }}>
-              <View
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
-                  backgroundColor: colors.sage,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icon
-                  size={17}
-                  name={
-                    event.kind === "payment"
-                      ? "money"
-                      : event.kind === "change"
-                        ? "file"
-                        : event.kind === "punch"
-                          ? "check"
-                          : "message"
-                  }
-                />
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  gap: 7,
-                  paddingBottom: 16,
-                  borderBottomColor: colors.line,
-                  borderBottomWidth: 1,
-                }}
-              >
-                <Copy style={{ fontFamily: fonts.bold, fontSize: 13 }}>
-                  {event.author}{" "}
-                  <Copy tone="muted" style={{ fontSize: 12 }}>
-                    {" "}
-                    · {dateLabel(event.at)}
-                  </Copy>
-                </Copy>
-                <Copy>{event.text}</Copy>
-                {event.photo && (
-                  <Image
-                    source={event.photo.uri}
-                    accessibilityLabel={event.photo.name}
-                    style={{ width: "100%", height: 180, borderRadius: 10 }}
-                    contentFit="cover"
-                  />
-                )}
-              </View>
-            </View>
-          ))}
         </>
       )}
       {tab === "money" && (
@@ -514,6 +600,11 @@ export default function ProjectDetail() {
         photos={photos}
         index={viewing}
         onClose={() => setViewing(null)}
+      />
+      <PhotoViewer
+        photos={postedPhotos}
+        index={viewingThread}
+        onClose={() => setViewingThread(null)}
       />
     </Screen>
   );

@@ -91,10 +91,6 @@ function Routes() {
           options={modal("Log a payment")}
         />
         <Stack.Screen
-          name="project/[id]/update"
-          options={modal("Project update")}
-        />
-        <Stack.Screen
           name="project/[id]/punch"
           options={{ title: "Punch list" }}
         />
