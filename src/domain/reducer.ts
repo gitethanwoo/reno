@@ -4,10 +4,13 @@ import {
   Photo,
   Project,
   Role,
+  Quote,
   addDays,
   emptyDraft,
   money,
+  quoteTotal,
   remaining,
+  roleIn,
   validDate,
   validateDraft,
 } from "./model";
@@ -69,7 +72,21 @@ export type Action =
       note: string;
       at: string;
     }
-  | { type: "complete"; projectId: string; at: string };
+  | { type: "complete"; projectId: string; at: string }
+  | {
+      type: "send-quote";
+      projectId: string;
+      id: string;
+      company: string;
+      depositPercent: number;
+      durationDays: number;
+      start: string;
+      cleanup: boolean;
+      items: Quote["items"];
+      at: string;
+    }
+  | { type: "accept-quote"; projectId: string; quoteId: string; at: string };
+const days = (n: number) => n + (n === 1 ? " day" : " days");
 function requireRole(role: Role, expected: Role) {
   if (role !== expected)
     throw new Error("Switch to the " + expected + " workspace to do this.");
@@ -124,6 +141,7 @@ export function reduce(state: AppState, action: Action): AppState {
   const index = state.projects.findIndex((p) => p.id === action.projectId);
   if (index < 0) throw new Error("This project could not be found.");
   const p = state.projects[index];
+  const role = roleIn(p, state);
   const projects = [...state.projects];
   let next = p;
   const event = (
@@ -135,10 +153,11 @@ export function reduce(state: AppState, action: Action): AppState {
     at: action.at,
     kind,
     text,
-    author: state.role === "contractor" ? "Alex · Coastal Tile" : state.name,
+    author:
+      p.isSample && role === "contractor" ? "Alex · Coastal Tile" : state.name,
   });
   if (action.type === "complete") {
-    requireRole(state.role, "homeowner");
+    requireRole(role, "homeowner");
     if (p.status === "completed") return state;
     if (p.status !== "active")
       throw new Error("Choose a contractor before completing a project.");
@@ -181,7 +200,7 @@ export function reduce(state: AppState, action: Action): AppState {
         "This project is complete. Its saved record is read-only.",
       );
     if (action.type === "change-decision") {
-      requireRole(state.role, "homeowner");
+      requireRole(role, "homeowner");
       const change = p.changes.find((c) => c.id === action.id);
       if (!change) throw new Error("This change could not be found.");
       if (change.status === action.decision) return state;
@@ -208,7 +227,7 @@ export function reduce(state: AppState, action: Action): AppState {
               change.title +
               "”. " +
               (action.decision === "approved"
-                ? "+" + money(change.cents) + " · +" + change.days + " day(s)."
+                ? "+" + money(change.cents) + " · +" + days(change.days) + "."
                 : "The agreed price and schedule are unchanged."),
             "decision-" + action.id,
           ),
@@ -216,7 +235,7 @@ export function reduce(state: AppState, action: Action): AppState {
         ],
       };
     } else if (action.type === "propose-change") {
-      requireRole(state.role, "contractor");
+      requireRole(role, "contractor");
       if (p.status !== "active")
         throw new Error("Changes are available for active projects.");
       if (!action.title.trim() || !action.reason.trim())
@@ -251,15 +270,15 @@ export function reduce(state: AppState, action: Action): AppState {
               "”: +" +
               money(action.cents) +
               " · +" +
-              action.days +
-              " day(s). Awaiting approval.",
+              days(action.days) +
+              ". Awaiting approval.",
             action.id,
           ),
           ...p.events,
         ],
       };
     } else if (action.type === "payment") {
-      requireRole(state.role, "homeowner");
+      requireRole(role, "homeowner");
       if (p.status !== "active")
         throw new Error("Payments need an accepted quote first.");
       if (
@@ -312,7 +331,7 @@ export function reduce(state: AppState, action: Action): AppState {
         ],
       };
     } else if (action.type === "punch-add") {
-      requireRole(state.role, "homeowner");
+      requireRole(role, "homeowner");
       if (!action.title.trim())
         throw new Error("Name the item that needs attention.");
       next = {
@@ -332,16 +351,109 @@ export function reduce(state: AppState, action: Action): AppState {
           ...p.events,
         ],
       };
+    } else if (action.type === "send-quote") {
+      requireRole(role, "contractor");
+      if (p.status !== "planning")
+        throw new Error("A quote has already been accepted for this project.");
+      if (p.quotes.some((q) => q.id === action.id)) return state;
+      const items = action.items
+        .map((i) => ({ label: i.label.trim(), cents: i.cents }))
+        .filter((i) => i.label || i.cents);
+      if (!action.company.trim()) throw new Error("Add your business name.");
+      if (!items.length || items.length > 20)
+        throw new Error("Add between 1 and 20 line items.");
+      if (
+        items.some(
+          (i) =>
+            !i.label ||
+            !Number.isInteger(i.cents) ||
+            i.cents <= 0 ||
+            i.cents > 100_000_000,
+        )
+      )
+        throw new Error("Give every line item a name and an amount.");
+      if (quoteTotal(items) > 100_000_000)
+        throw new Error("Keep the quote total under $1,000,000.");
+      if (
+        !Number.isInteger(action.depositPercent) ||
+        action.depositPercent < 0 ||
+        action.depositPercent > 100
+      )
+        throw new Error("Enter a deposit between 0 and 100 percent.");
+      if (
+        !Number.isInteger(action.durationDays) ||
+        action.durationDays < 1 ||
+        action.durationDays > 365
+      )
+        throw new Error("Enter how many working days the job takes.");
+      if (!validDate(action.start))
+        throw new Error("Enter a valid start date as YYYY-MM-DD.");
+      const revision = p.quotes.length > 0;
+      const quote: Quote = {
+        id: action.id,
+        company: action.company.trim(),
+        cents: quoteTotal(items),
+        depositPercent: action.depositPercent,
+        durationDays: action.durationDays,
+        start: action.start,
+        cleanup: action.cleanup,
+        items,
+      };
+      // Earlier versions stay in the record; the newest is last.
+      next = {
+        ...p,
+        quotes: [...p.quotes, quote],
+        events: [
+          event(
+            "project",
+            (revision ? "Sent a revised quote: " : "Sent a quote: ") +
+              money(quote.cents) +
+              ", " +
+              days(quote.durationDays) +
+              " starting " +
+              quote.start +
+              ".",
+            action.id,
+          ),
+          ...p.events,
+        ],
+      };
+    } else if (action.type === "accept-quote") {
+      requireRole(role, "homeowner");
+      if (p.status !== "planning")
+        throw new Error("A quote has already been accepted for this project.");
+      const quote = p.quotes.find((q) => q.id === action.quoteId);
+      if (!quote) throw new Error("This quote could not be found.");
+      if (quote.id !== p.quotes[p.quotes.length - 1].id)
+        throw new Error("A newer version of this quote was sent. Review it first.");
+      next = {
+        ...p,
+        status: "active",
+        quote,
+        finish: addDays(quote.start, quote.durationDays - 1),
+        events: [
+          event(
+            "project",
+            "Accepted the quote from " +
+              quote.company +
+              " for " +
+              money(quote.cents) +
+              ".",
+            "accept-" + quote.id,
+          ),
+          ...p.events,
+        ],
+      };
     } else if (action.type === "punch-review") {
       const item = p.punch.find((i) => i.id === action.id);
       if (!item) throw new Error("This item could not be found.");
       if (item.status === action.status) return state;
       if (action.status === "review") {
-        requireRole(state.role, "contractor");
+        requireRole(role, "contractor");
         if (item.status !== "open" || !action.note.trim())
           throw new Error("Explain the fix before sending it for review.");
       } else {
-        requireRole(state.role, "homeowner");
+        requireRole(role, "homeowner");
         if (action.status === "resolved" && item.status !== "review")
           throw new Error(
             "The contractor needs to submit the fix before you accept it.",

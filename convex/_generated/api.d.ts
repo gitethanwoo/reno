@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as invites from "../invites.js";
 import type * as notebook from "../notebook.js";
 import type * as ownership from "../ownership.js";
 import type * as validators from "../validators.js";
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   files: typeof files;
   http: typeof http;
+  invites: typeof invites;
   notebook: typeof notebook;
   ownership: typeof ownership;
   validators: typeof validators;

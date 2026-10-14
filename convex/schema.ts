@@ -2,39 +2,50 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import * as values from "./validators";
 
-const child = {
-  ownerId: v.string(),
-  projectId: v.string(),
-  position: v.number(),
-};
+// Project records are shared by everyone on the project, so they are keyed by
+// the globally unique projectId. Access is decided by the members table.
+const child = { projectId: v.string(), position: v.number() };
 export default defineSchema({
   notebooks: defineTable({ ownerId: v.string(), value: values.profile }).index(
     "by_ownerId",
     ["ownerId"],
   ),
   projects: defineTable({
-    ownerId: v.string(),
+    createdBy: v.string(),
     projectId: v.string(),
-    position: v.number(),
     value: values.projectBase,
+  }).index("by_projectId", ["projectId"]),
+  members: defineTable({
+    projectId: v.string(),
+    userId: v.string(),
+    role: values.role,
   })
-    .index("by_ownerId_and_position", ["ownerId", "position"])
-    .index("by_ownerId_and_projectId", ["ownerId", "projectId"]),
+    .index("by_userId", ["userId"])
+    .index("by_projectId_and_userId", ["projectId", "userId"]),
+  invites: defineTable({
+    code: v.string(),
+    projectId: v.string(),
+    createdBy: v.string(),
+    expiresAt: v.number(),
+    acceptedBy: v.optional(v.string()),
+  })
+    .index("by_code", ["code"])
+    .index("by_projectId", ["projectId"]),
   events: defineTable({ ...child, value: values.event }).index(
-    "by_ownerId_and_projectId_and_position",
-    ["ownerId", "projectId", "position"],
+    "by_projectId_and_position",
+    ["projectId", "position"],
   ),
   changes: defineTable({ ...child, value: values.change }).index(
-    "by_ownerId_and_projectId_and_position",
-    ["ownerId", "projectId", "position"],
+    "by_projectId_and_position",
+    ["projectId", "position"],
   ),
   payments: defineTable({ ...child, value: values.payment }).index(
-    "by_ownerId_and_projectId_and_position",
-    ["ownerId", "projectId", "position"],
+    "by_projectId_and_position",
+    ["projectId", "position"],
   ),
   punch: defineTable({ ...child, value: values.punch }).index(
-    "by_ownerId_and_projectId_and_position",
-    ["ownerId", "projectId", "position"],
+    "by_projectId_and_position",
+    ["projectId", "position"],
   ),
   ownedFiles: defineTable({
     ownerId: v.string(),

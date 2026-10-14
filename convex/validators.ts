@@ -91,11 +91,16 @@ export const projectBase = v.object({
   finish: v.union(v.string(), v.null()),
   completedAt: v.optional(v.string()),
 });
+export const member = v.object({ name: v.string(), role });
+export const invite = v.object({ code: v.string(), expiresAt: v.string() });
 export const project = projectBase.extend({
   events: v.array(event),
   changes: v.array(change),
   payments: v.array(payment),
   punch: v.array(punch),
+  viewerRole: v.optional(role),
+  members: v.optional(v.array(member)),
+  invite: v.optional(v.union(invite, v.null())),
 });
 export const profile = v.object({
   version: v.literal(1),
@@ -175,6 +180,24 @@ export const action = v.union(
   v.object({
     type: v.literal("complete"),
     projectId: v.string(),
+    at: v.string(),
+  }),
+  v.object({
+    type: v.literal("send-quote"),
+    projectId: v.string(),
+    id: v.string(),
+    company: v.string(),
+    depositPercent: v.number(),
+    durationDays: v.number(),
+    start: v.string(),
+    cleanup: v.boolean(),
+    items: v.array(v.object({ label: v.string(), cents: v.number() })),
+    at: v.string(),
+  }),
+  v.object({
+    type: v.literal("accept-quote"),
+    projectId: v.string(),
+    quoteId: v.string(),
     at: v.string(),
   }),
 );

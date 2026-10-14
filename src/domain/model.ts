@@ -62,6 +62,10 @@ const quoteSchema = z.object({
   items: z.array(z.object({ label: z.string(), cents })),
 });
 export type Quote = z.infer<typeof quoteSchema>;
+export const memberSchema = z.object({ name: z.string(), role: roleSchema });
+export type Member = z.infer<typeof memberSchema>;
+export const inviteSchema = z.object({ code: z.string(), expiresAt: z.string() });
+export type Invite = z.infer<typeof inviteSchema>;
 export const projectSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -81,8 +85,22 @@ export const projectSchema = z.object({
   punch: z.array(punchSchema),
   events: z.array(eventSchema),
   completedAt: z.string().optional(),
+  // Set by the server for shared projects; absent in the on-device sample notebook.
+  viewerRole: roleSchema.optional(),
+  members: z.array(memberSchema).optional(),
+  // Only returned to the homeowner while an invite is open.
+  invite: inviteSchema.nullable().optional(),
 });
 export type Project = z.infer<typeof projectSchema>;
+/**
+ * The viewer's role on one project. The sample project follows the
+ * homeowner/contractor preview switch; real projects use membership.
+ */
+export const roleIn = (p: Project, state: Pick<AppState, "role">): Role =>
+  p.isSample ? state.role : (p.viewerRole ?? "homeowner");
+export const contractorOf = (p: Project) =>
+  p.members?.find((m) => m.role === "contractor");
+export const latestQuote = (p: Project) => p.quotes[p.quotes.length - 1];
 export const appStateSchema = z.object({
   version: z.literal(1),
   name: z.string(),
@@ -138,6 +156,8 @@ export function addDays(date: string, days: number) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+export const quoteTotal = (items: { cents: number }[]) =>
+  items.reduce((sum, item) => sum + item.cents, 0);
 export function validDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
