@@ -1,5 +1,7 @@
 import { Stack, router } from "expo-router";
 import { View } from "react-native";
+import { confirm } from "@/lib/confirm";
+import { finish } from "@/lib/navigation";
 import { useProject } from "@/features/use-project";
 import { money, dateLabel, latestQuote, Quote } from "@/domain/model";
 import {
@@ -62,13 +64,27 @@ export default function Quotes() {
             icon="check"
             busy={task.busy}
             onPress={() =>
-              task.run(async () => {
-                await commit({
-                  type: "accept-quote",
-                  projectId: p.id,
-                  quoteId: latest.id,
-                  at: new Date().toISOString(),
-                });
+              // Accepting fixes the price and schedule, so confirm the terms.
+              confirm({
+                title: "Accept " + latest.company + "’s quote?",
+                message:
+                  money(latest.cents) +
+                  " · " +
+                  latest.depositPercent +
+                  "% deposit · starts " +
+                  dateLabel(latest.start) +
+                  ". After this, changes go through change requests.",
+                action: "Accept quote",
+                onConfirm: () =>
+                  task.run(async () => {
+                    await commit({
+                      type: "accept-quote",
+                      projectId: p.id,
+                      quoteId: latest.id,
+                      at: new Date().toISOString(),
+                    });
+                    finish(p.id);
+                  }),
               })
             }
           />

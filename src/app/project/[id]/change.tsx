@@ -1,5 +1,7 @@
 import { router } from "expo-router";
 import { View } from "react-native";
+import { confirm } from "@/lib/confirm";
+import { backToProject, finish } from "@/lib/navigation";
 import { useProject } from "@/features/use-project";
 import { addDays, dateLabel, money, total } from "@/domain/model";
 import {
@@ -39,6 +41,16 @@ export default function ChangeReview() {
         decision,
         at: new Date().toISOString(),
       });
+      finish(p.id);
+    });
+  const confirmDecline = () =>
+    confirm({
+      title: "Decline this change?",
+      message:
+        "The contractor will see it was declined. The budget and schedule stay as agreed.",
+      action: "Decline",
+      destructive: true,
+      onConfirm: () => decide("declined"),
     });
   const pending = c.status === "pending";
   return (
@@ -58,7 +70,7 @@ export default function ChangeReview() {
                   title="Decline"
                   variant="secondary"
                   disabled={task.busy}
-                  onPress={() => decide("declined")}
+                  onPress={confirmDecline}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -69,7 +81,7 @@ export default function ChangeReview() {
                   onPress={() =>
                     router.push({
                       pathname: "/project/[id]/update",
-                      params: { id: p.id },
+                      params: { id: p.id, text: "About “" + c.title + "”: " },
                     })
                   }
                 />
@@ -77,15 +89,7 @@ export default function ChangeReview() {
             </View>
           </View>
         ) : (
-          <Button
-            title="Back to project"
-            onPress={() =>
-              router.replace({
-                pathname: "/project/[id]",
-                params: { id: p.id },
-              })
-            }
-          />
+          <Button title="Back to project" onPress={() => backToProject(p.id)} />
         )
       }
     >
@@ -108,7 +112,11 @@ export default function ChangeReview() {
       <Copy>{c.reason}</Copy>
       <Card>
         <LineItem label="Added cost" value={"+" + money(c.cents)} strong />
-        <LineItem label="Added time" value={"+" + plural(c.days, "day")} strong />
+        <LineItem
+          label="Added time"
+          value={"+" + plural(c.days, "day")}
+          strong
+        />
         <Divider />
         <LineItem
           label="Project total"
@@ -123,7 +131,9 @@ export default function ChangeReview() {
             label="Finish date"
             value={
               pending
-                ? dateLabel(p.finish) + " → " + dateLabel(addDays(p.finish, c.days))
+                ? dateLabel(p.finish) +
+                  " → " +
+                  dateLabel(addDays(p.finish, c.days))
                 : dateLabel(p.finish)
             }
           />
