@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useStore } from "@/state/store";
-import { Card, Copy, Empty, Heading, Row, Screen } from "@/components/ui";
+import { Card, Copy, Empty, Row, Screen } from "@/components/ui";
 export default function Notifications() {
   const { state } = useStore();
   const pending = state.projects.flatMap((p) =>
@@ -8,8 +8,7 @@ export default function Notifications() {
   );
   return (
     <Screen>
-      <Heading>A few things{"\n"}to keep in view.</Heading>
-      <Copy tone="muted">Decisions that help your project move forward.</Copy>
+      <Copy tone="muted">Decisions waiting on you, newest first.</Copy>
       {pending.map(({ p, c }) => (
         <Card key={p.id + c.id}>
           <Row
@@ -27,7 +26,7 @@ export default function Notifications() {
       ))}
       {!pending.length && (
         <Empty
-          title="All caught up."
+          title="You’re all caught up."
           text="New project decisions will appear here."
         />
       )}

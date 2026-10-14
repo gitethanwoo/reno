@@ -7,13 +7,14 @@ import {
   Button,
   Card,
   Copy,
+  Divider,
   Empty,
   ErrorNote,
-  Eyebrow,
   Heading,
+  LineItem,
   Note,
-  Row,
   Screen,
+  plural,
   useTask,
 } from "@/components/ui";
 export default function ChangeReview() {
@@ -51,12 +52,29 @@ export default function ChangeReview() {
               busy={task.busy}
               onPress={() => decide("approved")}
             />
-            <Button
-              title="Decline change"
-              variant="secondary"
-              disabled={task.busy}
-              onPress={() => decide("declined")}
-            />
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title="Decline"
+                  variant="secondary"
+                  disabled={task.busy}
+                  onPress={() => decide("declined")}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title="Ask a question"
+                  variant="secondary"
+                  disabled={task.busy}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/project/[id]/update",
+                      params: { id: p.id },
+                    })
+                  }
+                />
+              </View>
+            </View>
           </View>
         ) : (
           <Button
@@ -71,53 +89,53 @@ export default function ChangeReview() {
         )
       }
     >
-      <Eyebrow>Change request</Eyebrow>
-      <Heading>
-        {pending ? "You decide\nwhat changes." : "Your decision\nis saved."}
-      </Heading>
-      <Badge warm={pending}>
-        {pending
-          ? "Awaiting your approval"
-          : c.status === "approved"
-            ? "Approved by you"
-            : "Declined"}
-      </Badge>
-      <Heading small>{c.title}</Heading>
+      <View style={{ gap: 10 }}>
+        <Badge warm={pending}>
+          {pending
+            ? state.role === "homeowner"
+              ? "Waiting for your decision"
+              : "Waiting for the homeowner"
+            : c.status === "approved"
+              ? "Approved"
+              : "Declined"}
+        </Badge>
+        <Heading>{c.title}</Heading>
+        <Copy tone="muted">
+          Proposed by {p.quote?.company ?? "your contractor"}
+          {c.decidedAt ? " · Decided " + dateLabel(c.decidedAt) : ""}
+        </Copy>
+      </View>
       <Copy>{c.reason}</Copy>
       <Card>
-        <Row title="Added cost" detail={"+" + money(c.cents)} />
-        <Row title="Extra time" detail={"+" + c.days + " day(s)"} />
-        <Row
-          title={pending ? "Proposed project total" : "Approved project total"}
-          detail={money(total(p) + (pending ? c.cents : 0))}
+        <LineItem label="Added cost" value={"+" + money(c.cents)} strong />
+        <LineItem label="Added time" value={"+" + plural(c.days, "day")} strong />
+        <Divider />
+        <LineItem
+          label="Project total"
+          value={
+            pending
+              ? money(total(p)) + " → " + money(total(p) + c.cents)
+              : money(total(p))
+          }
         />
         {p.finish && (
-          <Row
-            title={pending ? "Proposed finish date" : "Current finish date"}
-            detail={dateLabel(pending ? addDays(p.finish, c.days) : p.finish)}
+          <LineItem
+            label="Finish date"
+            value={
+              pending
+                ? dateLabel(p.finish) + " → " + dateLabel(addDays(p.finish, c.days))
+                : dateLabel(p.finish)
+            }
           />
         )}
       </Card>
-      <Note>
+      <Note warning={pending}>
         {pending
-          ? "Work on this change starts only after your approval. Until then, your agreed budget and schedule stay the same."
+          ? "Nothing changes until it’s approved. Until then, the agreed budget and schedule stay the same."
           : c.status === "approved"
-            ? "The new total and finish date are recorded in your project."
-            : "This decision is in your project record. Your agreed budget and schedule did not change."}
+            ? "The new total and finish date are now part of the agreed project."
+            : "Declined changes stay in the record. The agreed budget and schedule did not change."}
       </Note>
-      {pending && (
-        <Button
-          title="Ask a question first"
-          variant="quiet"
-          icon="message"
-          onPress={() =>
-            router.push({
-              pathname: "/project/[id]/update",
-              params: { id: p.id },
-            })
-          }
-        />
-      )}
       <ErrorNote error={task.error} />
     </Screen>
   );

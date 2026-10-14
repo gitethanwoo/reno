@@ -8,8 +8,8 @@ import {
   Empty,
   ErrorNote,
   Field,
-  Heading,
   Note,
+  Title,
   Screen,
   useTask,
 } from "@/components/ui";
@@ -54,7 +54,9 @@ export default function Propose() {
         />
       }
     >
-      <Heading>Put the change{"\n"}in writing.</Heading>
+      <Title sub="The homeowner sees the cost and time before deciding. Nothing changes until they approve.">
+        Propose a change
+      </Title>
       <Field
         label="Change title"
         value={title}
@@ -84,8 +86,7 @@ export default function Propose() {
         maxLength={3}
       />
       <Note>
-        This is a proposal. Wait for the homeowner’s approval before starting
-        the change.
+        Don’t start this work until the homeowner approves it.
       </Note>
       <ErrorNote error={task.error} />
     </Screen>

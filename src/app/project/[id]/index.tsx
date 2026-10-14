@@ -13,10 +13,12 @@ import {
   ErrorNote,
   Eyebrow,
   Heading,
+  LineItem,
   Note,
   Row,
   Screen,
-  Segments,
+  Tabs,
+  plural,
   useTask,
 } from "@/components/ui";
 import { kitchen } from "@/components/project-card";
@@ -64,27 +66,29 @@ export default function ProjectDetail() {
   const homeowner = state.role === "homeowner",
     complete = p.status === "completed";
   const pending = p.changes.filter((c) => c.status === "pending");
+  const openPunch = p.punch.filter((i) => i.status !== "resolved");
+  const pendingCents = pending.reduce((sum, c) => sum + c.cents, 0);
   return (
     <Screen>
-      <Stack.Screen options={{ title: p.title }} />
-      <View style={{ gap: 12 }}>
+      <Stack.Screen options={{ title: "" }} />
+      <View style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <Badge>{statusLabel(p)}</Badge>
           {p.isSample && <Badge warm>Sample project</Badge>}
         </View>
         <Heading>{p.title}</Heading>
         <Copy tone="muted">
-          {p.quote?.company ?? "Your next good idea"} · {p.zip}
+          {p.quote?.company ?? p.type} · {p.zip}
         </Copy>
       </View>
-      <Segments
+      <Tabs
         value={tab}
         onChange={setTab}
         options={[
-          { label: "Overview", value: "overview" },
+          { label: "Overview", value: "overview", count: pending.length },
           { label: "Record", value: "record" },
           { label: "Money", value: "money" },
-          { label: "Punch list", value: "punch" },
+          { label: "Punch list", value: "punch", count: openPunch.length },
         ]}
       />
       {tab === "overview" && (
@@ -106,10 +110,10 @@ export default function ProjectDetail() {
               </Eyebrow>
               <Heading small>{c.title}</Heading>
               <Copy>
-                +{money(c.cents)} · +{c.days} day{c.days === 1 ? "" : "s"}
+                +{money(c.cents)} · +{plural(c.days, "day")}
               </Copy>
               <Button
-                title="View change"
+                title={homeowner ? "Review change" : "View change"}
                 variant="secondary"
                 icon="arrow"
                 onPress={() => go("change", { changeId: c.id })}
@@ -174,17 +178,10 @@ export default function ProjectDetail() {
               onPress={() => task.run(() => exportProject(p))}
             />
           </Card>
-          {!complete && (
-            <Button
-              title="Post an update"
-              icon="plus"
-              onPress={() => go("update")}
-            />
-          )}
           {!complete && !homeowner && p.status === "active" && (
             <Button
               title="Propose a change"
-              variant="secondary"
+              icon="plus"
               onPress={() => go("propose")}
             />
           )}
@@ -205,7 +202,6 @@ export default function ProjectDetail() {
       )}
       {tab === "record" && (
         <>
-          <Heading small>One place for the whole story.</Heading>
           {!complete && (
             <Button
               title="Post an update"
@@ -270,60 +266,62 @@ export default function ProjectDetail() {
       )}
       {tab === "money" && (
         <>
-          <Heading>Every dollar,{"\n"}visible.</Heading>
           <Card>
-            <Eyebrow>Approved total</Eyebrow>
-            <Heading>{money(total(p))}</Heading>
-            <Row title="Original quote" detail={money(p.quote?.cents ?? 0)} />
-            <Row
-              title="Approved changes"
-              detail={"+" + money(total(p) - (p.quote?.cents ?? 0))}
+            <LineItem
+              label="Original quote"
+              value={p.quote ? money(p.quote.cents) : "—"}
+            />
+            <LineItem
+              label="Approved changes"
+              value={"+" + money(total(p) - (p.quote?.cents ?? 0))}
             />
             <Divider />
-            <View style={{ flexDirection: "row", gap: 20 }}>
-              <View style={{ flex: 1 }}>
-                <Copy tone="muted">Logged paid</Copy>
-                <Heading small>{money(paid(p))}</Heading>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Copy tone="muted">Remaining</Copy>
-                <Heading small>{money(remaining(p))}</Heading>
-              </View>
-            </View>
+            <LineItem label="Approved total" value={money(total(p))} strong />
+            <LineItem label="Logged as paid" value={"−" + money(paid(p))} />
+            <Divider />
+            <LineItem label="Remaining" value={money(remaining(p))} strong />
           </Card>
-          <Heading small>Payment record</Heading>
+          {pendingCents > 0 && (
+            <Note warning>
+              {money(pendingCents)} in proposed changes is not included above
+              until it is approved.
+            </Note>
+          )}
+          <View style={{ gap: 4 }}>
+            <Heading small>Payments</Heading>
+            <Copy tone="muted" style={{ fontSize: 14 }}>
+              Logged by you. Money is paid to your contractor outside Reno.
+            </Copy>
+          </View>
           {p.payments.length ? (
-            p.payments.map((payment) => (
-              <Card key={payment.id}>
+            <Card style={{ gap: 0, paddingVertical: 6 }}>
+              {p.payments.map((payment, i) => (
                 <View
+                  key={payment.id}
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    gap: 10,
+                    paddingVertical: 12,
+                    gap: 2,
+                    borderTopWidth: i ? 1 : 0,
+                    borderTopColor: colors.line,
                   }}
                 >
-                  <Copy style={{ fontFamily: fonts.bold }}>
-                    {payment.note || "Payment"}
-                  </Copy>
-                  <Copy style={{ fontFamily: fonts.bold }}>
-                    {money(payment.cents)}
+                  <LineItem
+                    label={payment.note || "Payment"}
+                    value={money(payment.cents)}
+                    strong
+                  />
+                  <Copy tone="muted" style={{ fontSize: 13 }}>
+                    {dateLabel(payment.date)} · {payment.method}
                   </Copy>
                 </View>
-                <Copy tone="muted" style={{ fontSize: 13 }}>
-                  {dateLabel(payment.date)} · {payment.method} · Logged by you
-                </Copy>
-              </Card>
-            ))
+              ))}
+            </Card>
           ) : (
             <Empty
-              title="A clean ledger."
-              text="Log payments after you choose your contractor."
+              title="No payments logged."
+              text="Log each payment after you make it, with the date and method."
             />
           )}
-          <Note>
-            Payments are recorded here. Money is paid directly to your
-            contractor outside Reno.
-          </Note>
           {homeowner && p.status === "active" && remaining(p) > 0 && (
             <Button
               title="Log a payment"
@@ -335,39 +333,70 @@ export default function ProjectDetail() {
       )}
       {tab === "punch" && (
         <>
-          <Heading>The final{"\n"}little things.</Heading>
-          <Copy tone="muted">
-            {p.punch.filter((i) => i.status === "resolved").length} of{" "}
-            {p.punch.length} items resolved
-          </Copy>
-          {p.punch.map((item) => (
-            <Card key={item.id}>
-              <Badge warm={item.status !== "resolved"}>
-                {item.status === "review"
-                  ? "Ready for your review"
-                  : item.status === "resolved"
-                    ? "Resolved"
-                    : "Open"}
-              </Badge>
-              <Heading small>{item.title}</Heading>
-              <Copy tone="muted">{item.note}</Copy>
-              <Button
-                title="View item"
-                variant="secondary"
-                onPress={() => go("punch", { itemId: item.id })}
-              />
+          {p.punch.length ? (
+            <View style={{ gap: 10 }}>
+              <Copy tone="muted">
+                {p.punch.length - openPunch.length} of {p.punch.length}{" "}
+                resolved
+              </Copy>
+              <View
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: colors.line,
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    height: 6,
+                    width: `${((p.punch.length - openPunch.length) / p.punch.length) * 100}%`,
+                    backgroundColor: colors.ink,
+                  }}
+                />
+              </View>
+            </View>
+          ) : null}
+          {p.punch.length ? (
+            <Card style={{ gap: 0, paddingVertical: 4 }}>
+              {p.punch.map((item, i) => (
+                <View
+                  key={item.id}
+                  style={{
+                    borderTopWidth: i ? 1 : 0,
+                    borderTopColor: colors.line,
+                  }}
+                >
+                  <Row
+                    title={item.title}
+                    detail={
+                      item.status === "review"
+                        ? homeowner
+                          ? "Fix submitted · Ready for your review"
+                          : "Fix submitted · Waiting for homeowner"
+                        : item.status === "resolved"
+                          ? "Resolved"
+                          : homeowner
+                            ? "Open · Waiting for a fix"
+                            : "Open · Needs your fix"
+                    }
+                    icon={item.status === "resolved" ? "check" : "tools"}
+                    onPress={() => go("punch", { itemId: item.id })}
+                  />
+                </View>
+              ))}
             </Card>
-          ))}
-          {!p.punch.length && (
+          ) : (
             <Empty
               title="Nothing on the list yet."
-              text="Add the details that need attention before the job is finished."
+              text="Add anything that needs attention before the job is finished."
             />
           )}
           {homeowner && !complete && (
             <Button
               title="Add punch item"
               icon="plus"
+              variant={p.punch.length ? "secondary" : "primary"}
               onPress={() => go("punch")}
             />
           )}

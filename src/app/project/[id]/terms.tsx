@@ -10,6 +10,7 @@ import {
   Heading,
   Note,
   Screen,
+  Title,
 } from "@/components/ui";
 export default function Terms() {
   const { project: p } = useProject();
@@ -19,13 +20,16 @@ export default function Terms() {
         <Empty title="Project not found." text="Return to Projects." />
       </Screen>
     );
+  const question =
+    "Can we confirm that the final balance is due after the agreed work and punch list are complete?";
   return (
     <Screen>
-      <Badge>Example term review</Badge>
-      <Heading>Know what you’re{"\n"}agreeing to.</Heading>
-      <Copy tone="muted">A clear question is a good place to start.</Copy>
+      <Badge>Example review</Badge>
+      <Title sub="Wording worth a second look before you sign, with a question you can send.">
+        Review the terms
+      </Title>
       <Card>
-        <Eyebrow>Payment timing · Example finding</Eyebrow>
+        <Eyebrow>Payment timing</Eyebrow>
         <Heading small>When is the balance due?</Heading>
         <Copy>“Balance due on final day of work.”</Copy>
         <Copy tone="muted">
@@ -34,25 +38,23 @@ export default function Terms() {
         </Copy>
       </Card>
       <Card>
-        <Eyebrow>A question worth asking</Eyebrow>
-        <Copy>
-          Can we confirm that the final balance is due after the agreed work and
-          punch list are complete?
-        </Copy>
+        <Eyebrow>Suggested question</Eyebrow>
+        <Copy>{question}</Copy>
         <Button
-          title="Write a project question"
+          title="Edit and send"
           variant="secondary"
           onPress={() =>
             router.push({
               pathname: "/project/[id]/update",
-              params: { id: p.id },
+              params: { id: p.id, text: question },
             })
           }
         />
       </Card>
       <Note>
-        This illustrates the planned AI review. Document analysis is not
-        connected yet. Findings are review prompts, not legal advice.
+        An example of the planned AI review; reading your actual documents
+        isn’t connected yet. Findings are prompts to ask about, not legal
+        advice.
       </Note>
     </Screen>
   );

@@ -16,6 +16,8 @@ import {
   Note,
   Screen,
   Segments,
+  Title,
+  plural,
   useTask,
 } from "@/components/ui";
 import { colors, fonts } from "@/components/theme";
@@ -106,17 +108,20 @@ export default function NewProject() {
       </View>
       {step === 0 && (
         <>
-          <Heading>What’s on{"\n"}your list?</Heading>
-          <Copy tone="muted">Start with one job. We’ll keep it clear.</Copy>
+          <Title sub="Pick the closest match. You’ll describe the details next.">
+            What kind of job?
+          </Title>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            {[
-              "Kitchen",
-              "Bathroom",
-              "Painting",
-              "Flooring",
-              "Roofing",
-              "Other",
-            ].map((type) => (
+            {(
+              [
+                ["Kitchen", "kitchen"],
+                ["Bathroom", "bath"],
+                ["Painting", "paint"],
+                ["Flooring", "floor"],
+                ["Roofing", "roof"],
+                ["Other", "tools"],
+              ] as const
+            ).map(([type, icon]) => (
               <Pressable
                 key={type}
                 accessibilityRole="radio"
@@ -124,8 +129,9 @@ export default function NewProject() {
                 onPress={() => update("type", type)}
                 style={{
                   width: "47%",
-                  minHeight: 110,
-                  padding: 20,
+                  flexGrow: 1,
+                  minHeight: 96,
+                  padding: 18,
                   gap: 14,
                   borderRadius: 14,
                   borderWidth: 1.5,
@@ -134,7 +140,7 @@ export default function NewProject() {
                     draft.type === type ? colors.sage : colors.white,
                 }}
               >
-                <Icon name={type === "Roofing" ? "home" : "tools"} />
+                <Icon name={icon} />
                 <Copy style={{ fontFamily: fonts.medium }}>{type}</Copy>
               </Pressable>
             ))}
@@ -143,7 +149,7 @@ export default function NewProject() {
       )}
       {step === 1 && (
         <>
-          <Heading>Tell us what{"\n"}you have in mind.</Heading>
+          <Title>Describe the work</Title>
           <Field
             label="Project name"
             value={draft.title}
@@ -203,11 +209,9 @@ export default function NewProject() {
       )}
       {step === 2 && (
         <>
-          <Heading>Show us{"\n"}the space.</Heading>
-          <Copy tone="muted">
-            A few photos make the scope clearer. Add your room or a look you
-            love.
-          </Copy>
+          <Title sub="Photos of the space as it is now, plus any look you love. They make quotes more accurate.">
+            Add photos
+          </Title>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
             {draft.photos.map((photo) => (
               <View key={photo.id} style={{ width: "47%", gap: 4 }}>
@@ -250,11 +254,9 @@ export default function NewProject() {
       )}
       {step === 3 && (
         <>
-          <Heading>A clear start.</Heading>
-          <Copy tone="muted">
-            Here’s your first work order. You can keep adding to it as your
-            plans take shape.
-          </Copy>
+          <Title sub="Check your work order. You can add to it later.">
+            Review and save
+          </Title>
           <Card>
             <Eyebrow>{draft.type}</Eyebrow>
             <Heading small>{draft.title}</Heading>
@@ -263,7 +265,9 @@ export default function NewProject() {
               {draft.zip} · {draft.timing}
               {draft.area ? " · " + draft.area + " sq ft" : ""}
             </Copy>
-            <Copy tone="muted">{draft.photos.length} photos attached</Copy>
+            <Copy tone="muted">
+              {plural(draft.photos.length, "photo")} attached
+            </Copy>
           </Card>
           <Note>
             This saves your project. It does not request quotes or share your

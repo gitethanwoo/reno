@@ -6,6 +6,7 @@ export function useProject() {
     itemId?: string;
     changeId?: string;
     tab?: string;
+    text?: string;
   }>();
   const store = useStore();
   return {

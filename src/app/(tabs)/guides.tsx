@@ -10,7 +10,8 @@ import {
   Heading,
   Row,
   Screen,
-  Segments,
+  Tabs,
+  Title,
 } from "@/components/ui";
 import { colors } from "@/components/theme";
 export default function Guides() {
@@ -21,8 +22,8 @@ export default function Guides() {
   );
   return (
     <Screen>
-      <Heading>A little know-how{"\n"}goes a long way.</Heading>
-      <Segments
+      <Title sub="Short, practical reads for each stage of a job.">Guides</Title>
+      <Tabs
         value={tab}
         onChange={setTab}
         options={[
@@ -36,7 +37,7 @@ export default function Guides() {
           style={{ backgroundColor: i === 0 ? colors.lime : colors.white }}
         >
           <Eyebrow>Reno field guide · {g.minutes} min</Eyebrow>
-          <Heading>{g.title}</Heading>
+          <Heading small>{g.title}</Heading>
           <Copy>{g.subtitle}</Copy>
           <Row
             title="Read the guide"

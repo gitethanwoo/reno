@@ -5,14 +5,13 @@ import { uid } from "@/state/store";
 import { money, parseMoney, remaining } from "@/domain/model";
 import {
   Button,
-  Copy,
   Empty,
   ErrorNote,
+  Chips,
   Field,
-  Heading,
   Note,
   Screen,
-  Segments,
+  Title,
   useTask,
 } from "@/components/ui";
 export default function Payment() {
@@ -54,8 +53,9 @@ export default function Payment() {
         />
       }
     >
-      <Heading>Keep the{"\n"}receipt.</Heading>
-      <Copy tone="muted">Remaining balance · {money(remaining(p))}</Copy>
+      <Title sub={money(remaining(p)) + " left on the approved total."}>
+        Log a payment
+      </Title>
       <Field
         label="Amount paid ($)"
         placeholder="0.00"
@@ -64,14 +64,14 @@ export default function Payment() {
         onChangeText={setAmount}
       />
       <Field
-        label="Payment date (YYYY-MM-DD)"
+        label="Date paid (YYYY-MM-DD)"
         placeholder="2026-10-21"
         value={date}
         onChangeText={setDate}
         maxLength={10}
       />
-      <Copy>How did you pay?</Copy>
-      <Segments
+      <Chips
+        label="How did you pay?"
         value={method}
         onChange={setMethod}
         options={["Bank transfer", "Card", "Cash", "Check"].map((value) => ({
@@ -87,7 +87,8 @@ export default function Payment() {
         maxLength={200}
       />
       <Note>
-        This records a payment you already made. No money moves through Reno.
+        This records a payment you already made. No money moves through
+        Reno, and it isn’t proof the contractor received it.
       </Note>
       <ErrorNote error={task.error} />
     </Screen>

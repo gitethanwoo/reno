@@ -77,7 +77,7 @@ function Gate({ children }: { children: React.ReactNode }) {
         style={{ width: "100%", height: 250 }}
       />
       <View style={{ paddingHorizontal: 24, gap: 18 }}>
-        <Heading>Your home.{"\n"}Your say.</Heading>
+        <Heading display>Your home.{"\n"}Your say.</Heading>
         <Copy>
           One clear record, from the first idea to the final walkthrough.
         </Copy>

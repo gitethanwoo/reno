@@ -54,10 +54,6 @@ function Routes() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
-        name="welcome"
-        options={{ headerShown: false, presentation: "fullScreenModal" }}
-      />
-      <Stack.Screen
         name="new-project"
         options={{ title: "New project", presentation: "modal" }}
       />

@@ -6,18 +6,17 @@ import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
 import {
   Button,
-  Copy,
   Empty,
   ErrorNote,
   Field,
-  Heading,
+  Title,
   Screen,
   useTask,
 } from "@/components/ui";
 export default function Update() {
-  const { project: p, commit, addPhoto } = useProject();
+  const { project: p, commit, addPhoto, params } = useProject();
   const task = useTask();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(params.text ?? "");
   const [photo, setPhoto] = useState<Photo>();
   const [id] = useState(uid);
   if (!p)
@@ -31,7 +30,7 @@ export default function Update() {
       keyboard
       footer={
         <Button
-          title="Save update"
+          title="Post update"
           icon="arrow"
           busy={task.busy}
           onPress={() =>
@@ -50,8 +49,9 @@ export default function Update() {
         />
       }
     >
-      <Heading>A little update.{"\n"}A better record.</Heading>
-      <Copy tone="muted">{p.title}</Copy>
+      <Title sub={"Added to the " + p.title + " record with today’s date."}>
+        Post an update
+      </Title>
       <Field
         label="Your update"
         multiline

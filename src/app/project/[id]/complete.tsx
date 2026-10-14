@@ -4,16 +4,20 @@ import { Image } from "expo-image";
 import { useProject } from "@/features/use-project";
 import { remaining, money, total } from "@/domain/model";
 import { kitchen } from "@/components/project-card";
+import { View } from "react-native";
 import {
   Button,
   Card,
+  Check,
+  Checkbox,
   Copy,
+  Divider,
   Empty,
   ErrorNote,
-  Heading,
-  Note,
-  Row,
+  LineItem,
   Screen,
+  Title,
+  plural,
   useTask,
 } from "@/components/ui";
 import { exportProject } from "@/lib/export-project";
@@ -30,76 +34,29 @@ export default function Complete() {
   const complete = p.status === "completed",
     open = p.punch.filter((i) => i.status !== "resolved").length,
     pending = p.changes.filter((c) => c.status === "pending").length;
+  const ready = !open && !pending && remaining(p) === 0;
   return (
-    <Screen>
-      <Heading>
-        {complete ? "A job\nwell kept." : "Finish with\neverything in place."}
-      </Heading>
-      {complete && (
-        <Image
-          source={p.photos[0]?.uri ?? kitchen}
-          contentFit="cover"
-          style={{ width: "100%", height: 220, borderRadius: 14 }}
-        />
-      )}
-      <Card>
-        <Row
-          icon="check"
-          title={
-            open ? open + " punch items still open" : "Punch list resolved"
-          }
-        />
-        <Row
-          icon="file"
-          title={
-            pending
-              ? pending + " changes awaiting a decision"
-              : "All changes decided"
-          }
-        />
-        <Row
-          icon="money"
-          title={
-            remaining(p)
-              ? money(remaining(p)) + " remaining to log"
-              : "Payments reconciled"
-          }
-        />
-      </Card>
-      {complete ? (
-        <>
-          <Copy>Final approved cost · {money(total(p))}</Copy>
-          <Button
-            title="Export project record"
-            icon="download"
-            onPress={() => task.run(() => exportProject(p))}
-          />
-          <Button
-            title="Back to project"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
-        </>
-      ) : (
-        <>
-          <Note>
-            Check the work in person before completing your project. This closes
-            the notebook for editing.
-          </Note>
-          <Button
-            title={
-              confirmed
-                ? "✓ I’ve reviewed the completed work"
-                : "I’ve reviewed the completed work"
-            }
-            variant="secondary"
-            onPress={() => setConfirmed(!confirmed)}
-          />
+    <Screen
+      footer={
+        complete ? (
+          <View style={{ gap: 8 }}>
+            <Button
+              title="Export project record"
+              icon="download"
+              busy={task.busy}
+              onPress={() => task.run(() => exportProject(p))}
+            />
+            <Button
+              title="Back to project"
+              variant="quiet"
+              onPress={() => router.back()}
+            />
+          </View>
+        ) : (
           <Button
             title="Complete project"
-            disabled={
-              !confirmed || open > 0 || pending > 0 || remaining(p) !== 0
-            }
+            icon="check"
+            disabled={!confirmed || !ready}
             busy={task.busy}
             onPress={() =>
               task.run(async () => {
@@ -111,7 +68,62 @@ export default function Complete() {
               })
             }
           />
-        </>
+        )
+      }
+    >
+      <Title
+        sub={
+          complete
+            ? "The quote, changes, payments, photos and punch list stay together in this record."
+            : ready
+              ? "Everything is settled. Confirm you’ve checked the work to close the job."
+              : "A few things need to be settled before you close the job."
+        }
+      >
+        {complete ? "Project complete" : "Finish the project"}
+      </Title>
+      {complete && (
+        <Image
+          source={p.photos[0]?.uri ?? kitchen}
+          contentFit="cover"
+          style={{ width: "100%", height: 220, borderRadius: 14 }}
+        />
+      )}
+      <Card style={{ gap: 6 }}>
+        <Check done={!open}>
+          {open
+            ? plural(open, "punch item") + " still open"
+            : "Punch list resolved"}
+        </Check>
+        <Check done={!pending}>
+          {pending
+            ? plural(pending, "change") + " waiting for a decision"
+            : "All changes decided"}
+        </Check>
+        <Check done={remaining(p) === 0}>
+          {remaining(p)
+            ? money(remaining(p)) + " not yet logged as paid"
+            : "All payments logged"}
+        </Check>
+        {complete && (
+          <>
+            <Divider />
+            <LineItem label="Final cost" value={money(total(p))} strong />
+          </>
+        )}
+      </Card>
+      {!complete && (
+        <Checkbox
+          label="I’ve checked the finished work in person"
+          checked={confirmed}
+          onChange={setConfirmed}
+        />
+      )}
+      {!complete && (
+        <Copy tone="muted" style={{ fontSize: 14 }}>
+          Completing the project locks the record. You can still view and
+          export it.
+        </Copy>
       )}
       <ErrorNote error={task.error} />
     </Screen>

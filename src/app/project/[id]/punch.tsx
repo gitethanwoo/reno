@@ -9,12 +9,15 @@ import {
   Copy,
   Empty,
   ErrorNote,
+  Eyebrow,
   Field,
   Heading,
   Note,
   Screen,
+  Title,
   useTask,
 } from "@/components/ui";
+import { View } from "react-native";
 export default function Punch() {
   const { project: p, params, state, commit } = useProject();
   const task = useTask();
@@ -65,7 +68,9 @@ export default function Punch() {
           />
         }
       >
-        <Heading>The details{"\n"}make the difference.</Heading>
+        <Title sub="Your contractor submits a fix, then you decide whether it’s resolved.">
+          Add a punch item
+        </Title>
         <Field
           label="What needs attention?"
           placeholder="e.g. Finish the window edge"
@@ -86,66 +91,82 @@ export default function Punch() {
     );
   const homeowner = state.role === "homeowner",
     closed = p.status === "completed";
+  // Who can act on the item right now, and how.
+  const canReview = homeowner && item.status === "review";
+  const canReopen = homeowner && item.status === "resolved";
+  const canSubmit = !homeowner && item.status === "open";
+  const acting = !closed && (canReview || canReopen || canSubmit);
   return (
     <Screen keyboard>
-      <Badge warm={item.status !== "resolved"}>
-        {item.status === "review"
-          ? "Ready for review"
-          : item.status === "resolved"
-            ? "Resolved"
-            : "Open"}
-      </Badge>
-      <Heading>{item.title}</Heading>
-      <Copy>{item.note}</Copy>
+      <View style={{ gap: 10 }}>
+        <Badge warm={item.status !== "resolved"}>
+          {item.status === "review"
+            ? homeowner
+              ? "Fix submitted · Ready for your review"
+              : "Fix submitted · Waiting for homeowner"
+            : item.status === "resolved"
+              ? "Resolved"
+              : "Open"}
+        </Badge>
+        <Heading>{item.title}</Heading>
+        <Copy>{item.note}</Copy>
+      </View>
       {item.resolution && (
         <Card>
+          <Eyebrow>Latest note</Eyebrow>
           <Copy>{item.resolution}</Copy>
         </Card>
       )}
-      {!closed && (
-        <>
-          <Field
-            label={homeowner ? "Your review note" : "Explain the fix"}
-            value={note}
-            onChangeText={setNote}
-            multiline
-            placeholder={
-              homeowner
-                ? "What still needs attention?"
-                : "Tell the homeowner what you fixed."
-            }
-            maxLength={1000}
-          />
-          {homeowner && item.status === "review" && (
-            <Button
-              title="Accept the fix"
-              icon="check"
-              busy={task.busy}
-              onPress={() => act("resolved")}
-            />
-          )}
-          {homeowner && item.status !== "open" && (
-            <Button
-              title="Needs more work"
-              variant="secondary"
-              disabled={task.busy}
-              onPress={() => act("open")}
-            />
-          )}
-          {!homeowner && item.status === "open" && (
-            <Button
-              title="Send for homeowner review"
-              busy={task.busy}
-              onPress={() => act("review")}
-            />
-          )}
-        </>
+      {acting && (
+        <Field
+          label={
+            canSubmit
+              ? "What did you fix?"
+              : canReview
+                ? "Note (needed if it still needs work)"
+                : "Why are you reopening it?"
+          }
+          value={note}
+          onChangeText={setNote}
+          multiline
+          placeholder={
+            canSubmit
+              ? "Tell the homeowner what you fixed."
+              : "What still needs attention?"
+          }
+          maxLength={1000}
+        />
       )}
-      <Note>
-        {homeowner && item.status === "open"
-          ? "The contractor submits a fix first. You then review it and decide whether it is resolved."
-          : "Only the homeowner can accept a fix and close the item."}
-      </Note>
+      {!closed && canReview && (
+        <Button
+          title="Accept the fix"
+          icon="check"
+          busy={task.busy}
+          onPress={() => act("resolved")}
+        />
+      )}
+      {!closed && (canReview || canReopen) && (
+        <Button
+          title={canReopen ? "Reopen item" : "Needs more work"}
+          variant="secondary"
+          disabled={task.busy}
+          onPress={() => act("open")}
+        />
+      )}
+      {!closed && canSubmit && (
+        <Button
+          title="Send for homeowner review"
+          busy={task.busy}
+          onPress={() => act("review")}
+        />
+      )}
+      {!closed && !acting && (
+        <Note>
+          {homeowner
+            ? "Waiting for your contractor to submit a fix. You’ll decide whether it’s resolved."
+            : "Waiting for the homeowner to review your fix. Only they can close the item."}
+        </Note>
+      )}
       <ErrorNote error={task.error} />
     </Screen>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { useStore } from "@/state/store";
-import { Button, Empty, Heading, Screen, Segments } from "@/components/ui";
+import { Button, Empty, Screen, Tabs, Title } from "@/components/ui";
 import { ProjectCard } from "@/components/project-card";
 export default function Projects() {
   const { state } = useStore();
@@ -13,8 +13,8 @@ export default function Projects() {
   );
   return (
     <Screen>
-      <Heading>Your work,{"\n"}in order.</Heading>
-      <Segments
+      <Title>Projects</Title>
+      <Tabs
         value={filter}
         onChange={setFilter}
         options={[
@@ -27,12 +27,12 @@ export default function Projects() {
       ) : (
         <Empty
           title={
-            filter === "completed" ? "Good endings live here." : "A fresh page."
+            filter === "completed" ? "No completed projects yet." : "No active projects."
           }
           text={
             filter === "completed"
-              ? "Completed jobs and their records will be kept here."
-              : "Start with a clear scope for your next project."
+              ? "Finished jobs keep their quote, changes, payments and punch list here."
+              : "Describe one job, add a few photos, and keep every decision in one place."
           }
         />
       )}
