@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDiscardGuard } from "@/lib/discard";
 import { Stack, router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -30,19 +31,22 @@ export default function NewProject() {
   const update = (field: keyof Draft, value: string) =>
     setDraft((d) => ({ ...d, [field]: value }));
   const save = () => commit({ type: "save-draft", draft });
-  const next = () =>
-    task.run(async () => {
-      if (step === 1) validateDraft(draft);
-      await save();
-      setStep((n) => n + 1);
-    });
+  const [initial] = useState(() => JSON.stringify(state.draft));
+  const allowLeave = useDiscardGuard(
+    JSON.stringify(draft) !== initial,
+    (leave) =>
+      task.run(async () => {
+        await save();
+        leave();
+      }),
+  );
   return (
     <Screen
       error={task.error}
       keyboard
       footer={
-        <View style={{ gap: 8 }}>
-          {step > 0 && (
+        step > 0 && (
+          <View style={{ gap: 8 }}>
             <Button
               title={step === 2 ? "Create project" : "Continue"}
               icon="arrow"
@@ -57,27 +61,33 @@ export default function NewProject() {
                           id,
                           at: new Date().toISOString(),
                         });
+                        allowLeave();
                         router.replace({
                           pathname: "/project/[id]",
                           params: { id },
                         });
                       })
-                  : next
+                  : () =>
+                      task.run(async () => {
+                        validateDraft(draft);
+                        setStep(2);
+                      })
               }
             />
-          )}
-          <Button
-            title="Save draft & close"
-            variant="quiet"
-            disabled={task.busy}
-            onPress={() =>
-              task.run(async () => {
-                await save();
-                router.back();
-              })
-            }
-          />
-        </View>
+            <Button
+              title="Save draft & close"
+              variant="quiet"
+              disabled={task.busy}
+              onPress={() =>
+                task.run(async () => {
+                  await save();
+                  allowLeave();
+                  router.back();
+                })
+              }
+            />
+          </View>
+        )
       }
     >
       <Stack.Screen
