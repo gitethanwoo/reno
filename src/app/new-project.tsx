@@ -45,11 +45,11 @@ export default function NewProject() {
         <View style={{ gap: 8 }}>
           {step > 0 && (
             <Button
-              title={step === 3 ? "Create project" : "Continue"}
+              title={step === 2 ? "Create project" : "Continue"}
               icon="arrow"
               busy={task.busy}
               onPress={
-                step === 3
+                step === 2
                   ? () =>
                       task.run(async () => {
                         await save();
@@ -89,8 +89,7 @@ export default function NewProject() {
         }}
       >
         <Eyebrow>
-          {step + 1} of 4 ·{" "}
-          {["The job", "The details", "The look", "Your work order"][step]}
+          {step + 1} of 3 · {["The job", "The details", "The look"][step]}
         </Eyebrow>
         {step > 0 && (
           <IconButton
@@ -104,7 +103,7 @@ export default function NewProject() {
         <View
           style={{
             height: 4,
-            width: `${(step + 1) * 25}%`,
+            width: `${((step + 1) / 3) * 100}%`,
             backgroundColor: colors.rust,
           }}
         />
@@ -279,29 +278,21 @@ export default function NewProject() {
           <Copy tone="muted" style={{ fontSize: 13 }}>
             Up to 8 photos now. You can add more from the project page later.
           </Copy>
-        </>
-      )}
-      {step === 3 && (
-        <>
-          <Title sub="Check your work order. You can add to it later.">
-            Review and save
-          </Title>
           <Card>
-            <Eyebrow>{draft.type}</Eyebrow>
+            <Eyebrow>Your work order</Eyebrow>
             <Heading small>{draft.title}</Heading>
-            <Copy>{draft.scope}</Copy>
             <Copy tone="muted">
-              {draft.zip} · {draft.timing}
-              {draft.area ? " · " + draft.area + " sq ft" : ""}
-            </Copy>
-            <Copy tone="muted">
-              {plural(draft.photos.length, "photo")} attached
+              {[
+                draft.type,
+                draft.zip,
+                draft.timing,
+                draft.area && draft.area + " sq ft",
+                plural(draft.photos.length, "photo"),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </Copy>
           </Card>
-          <Note>
-            This saves your project. It does not request quotes or share your
-            details with contractors yet.
-          </Note>
         </>
       )}
     </Screen>
