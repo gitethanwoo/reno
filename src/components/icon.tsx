@@ -20,7 +20,12 @@ export type IconName =
   | "chevron"
   | "spark"
   | "tools"
-  | "download";
+  | "download"
+  | "kitchen"
+  | "bath"
+  | "paint"
+  | "floor"
+  | "roof";
 const paths: Partial<Record<IconName, string>> = {
   home: "M3 10L12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z",
   projects: "M3 7h7l2-3h8a1 1 0 0 1 1 1v15H3z",
@@ -40,6 +45,12 @@ const paths: Partial<Record<IconName, string>> = {
   spark: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3z",
   tools: "m14 6 4 4-9 9-4-4zM14 6l1-3 6 6-3 1M5 15l-2 6 6-2",
   download: "M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5",
+  kitchen:
+    "M4 10h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3zM2 10h20M9 6V3M12 6V2M15 6V3",
+  bath: "M3 12h18v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5zM6 12V5a2 2 0 0 1 4 0M7 20l-1 2M17 20l1 2",
+  paint: "M4 3h13v5H4zM17 5h3v6h-8v3M11 14h2v7h-2z",
+  floor: "M3 3h18v18H3zM3 9h18M3 15h18M9 3v6M15 9v6M9 15v6",
+  roof: "M2 12 12 4l10 8M5 10v10h14V10M10 20v-5h4v5",
 };
 export function Icon({
   name,

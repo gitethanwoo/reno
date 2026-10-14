@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -41,14 +42,38 @@ export function Copy({
 export function Heading({
   children,
   small = false,
+  display = false,
 }: {
   children: React.ReactNode;
   small?: boolean;
+  display?: boolean;
 }) {
   return (
-    <Text accessibilityRole="header" selectable style={small ? s.h2 : s.h1}>
+    <Text
+      accessibilityRole="header"
+      selectable
+      style={small ? s.h2 : display ? s.display : s.h1}
+    >
       {children}
     </Text>
+  );
+}
+/** Screen title with an optional one-line explanation underneath. */
+export function Title({
+  children,
+  eyebrow,
+  sub,
+}: {
+  children: React.ReactNode;
+  eyebrow?: string;
+  sub?: React.ReactNode;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <Heading>{children}</Heading>
+      {sub && <Copy tone="muted">{sub}</Copy>}
+    </View>
   );
 }
 export function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -380,6 +405,189 @@ export function Empty({
 export function Divider() {
   return <View style={{ height: 1, backgroundColor: colors.line }} />;
 }
+/** Label on the left, value on the right. Use for money, dates and counts. */
+export function LineItem({
+  label,
+  value,
+  strong = false,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: "muted" | "rust";
+}) {
+  return (
+    <View style={s.lineItem}>
+      <Copy
+        tone={strong ? undefined : "muted"}
+        style={[{ flex: 1 }, strong && { fontFamily: fonts.medium }]}
+      >
+        {label}
+      </Copy>
+      <Copy
+        tone={tone}
+        style={[
+          s.figure,
+          strong && { fontFamily: fonts.bold, fontSize: 18 },
+        ]}
+      >
+        {value}
+      </Copy>
+    </View>
+  );
+}
+/** Underlined text tabs. Labels never truncate; the row scrolls if needed. */
+export function Tabs<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: T; count?: number }[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      contentContainerStyle={{ gap: 22 }}
+      accessibilityRole="tablist"
+    >
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(o.value)}
+            style={{
+              minHeight: 44,
+              justifyContent: "center",
+              borderBottomWidth: 2,
+              borderBottomColor: active ? colors.ink : "transparent",
+              marginBottom: -1,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: active ? fonts.bold : fonts.medium,
+                fontSize: 15,
+                color: active ? colors.ink : colors.muted,
+              }}
+            >
+              {o.label}
+              {o.count ? (
+                <Text style={{ color: colors.rust }}> · {o.count}</Text>
+              ) : null}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+/** Single-choice chips that wrap instead of truncating. */
+export function Chips<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label?: string;
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <View style={{ gap: 10 }}>
+      {label && <Text style={s.label}>{label}</Text>}
+      <View
+        accessibilityRole="radiogroup"
+        style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+      >
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <Pressable
+              key={o.value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active }}
+              onPress={() => onChange(o.value)}
+              style={[s.chip, active && s.chipActive]}
+            >
+              {active && <Icon name="check" size={16} color={colors.white} />}
+              <Text
+                style={{
+                  fontFamily: fonts.medium,
+                  fontSize: 15,
+                  color: active ? colors.white : colors.ink,
+                }}
+              >
+                {o.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+export function Checkbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
+      onPress={() => onChange(!checked)}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+        minHeight: 48,
+      }}
+    >
+      <View style={[s.box, checked && s.boxChecked]}>
+        {checked && <Icon name="check" size={16} color={colors.white} />}
+      </View>
+      <Copy style={{ flex: 1, fontFamily: fonts.medium }}>{label}</Copy>
+    </Pressable>
+  );
+}
+/** A checklist line whose state is carried by icon and text, not color alone. */
+export function Check({ done, children }: { done: boolean; children: string }) {
+  return (
+    <View
+      style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 40 }}
+    >
+      <View
+        style={[
+          s.checkDot,
+          done ? { backgroundColor: colors.ink } : { borderColor: colors.rust },
+        ]}
+      >
+        <Icon
+          name={done ? "check" : "close"}
+          size={13}
+          color={done ? colors.white : colors.rust}
+        />
+      </View>
+      <Copy style={{ flex: 1 }}>{children}</Copy>
+    </View>
+  );
+}
+export const plural = (n: number, one: string, many = one + "s") =>
+  `${n} ${n === 1 ? one : many}`;
 export function useTask() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -419,19 +627,69 @@ const s = StyleSheet.create({
     lineHeight: 24,
     color: colors.ink,
   },
-  h1: {
+  display: {
     fontFamily: fonts.serif,
     fontSize: 42,
     lineHeight: 46,
     letterSpacing: -0.9,
     color: colors.ink,
   },
+  h1: {
+    fontFamily: fonts.serif,
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -0.6,
+    color: colors.ink,
+  },
   h2: {
     fontFamily: fonts.serif,
-    fontSize: 27,
-    lineHeight: 32,
-    letterSpacing: -0.35,
+    fontSize: 24,
+    lineHeight: 29,
+    letterSpacing: -0.3,
     color: colors.ink,
+  },
+  figure: {
+    fontFamily: fonts.medium,
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+  },
+  lineItem: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 12,
+    minHeight: 32,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
+  chipActive: { backgroundColor: colors.ink, borderColor: colors.ink },
+  box: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    borderColor: colors.muted,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.white,
+  },
+  boxChecked: { backgroundColor: colors.ink, borderColor: colors.ink },
+  checkDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
   },
   eyebrow: {
     fontFamily: fonts.bold,
@@ -441,28 +699,6 @@ const s = StyleSheet.create({
     color: colors.rust,
   },
   label: { fontFamily: fonts.medium, color: colors.ink, fontSize: 14 },
-  input: {
-    minHeight: 54,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 12,
-    padding: 16,
-    color: colors.ink,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-  },
-  button: {
-    minHeight: 54,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    borderWidth: 1,
-  },
   card: {
     backgroundColor: colors.white,
     borderWidth: 1,
@@ -493,20 +729,5 @@ const s = StyleSheet.create({
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
-  },
-  segments: {
-    flexDirection: "row",
-    backgroundColor: "#ECECE3",
-    padding: 4,
-    borderRadius: 12,
-    gap: 2,
-  },
-  segment: {
-    minHeight: 44,
-    flex: 1,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
   },
 });
