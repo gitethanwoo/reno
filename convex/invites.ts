@@ -199,12 +199,28 @@ export const accept = mutation({
       userId,
       role: "contractor",
     });
+    // Someone joining as a contractor who hasn't started a project of their
+    // own gets the contractor app (Jobs tab, no "Start a project").
+    let ownsRealProject = false;
+    for (const m of mine)
+      if (m.role === "homeowner") {
+        const row = await ctx.db
+          .query("projects")
+          .withIndex("by_projectId", (q) => q.eq("projectId", m.projectId))
+          .unique();
+        if (row && !row.value.isSample) ownsRealProject = true;
+      }
+    if (!ownsRealProject && notebook.value.role !== "contractor")
+      await ctx.db.patch(notebook._id, {
+        value: { ...notebook.value, role: "contractor" },
+      });
+    const name = notebook.value.name || "Your contractor";
     const joined = {
       id: `joined-${invite._id}`,
       at: new Date(now).toISOString(),
       kind: "project" as const,
-      author: notebook.value.name,
-      text: `${notebook.value.name} joined the project as the contractor.`,
+      author: name,
+      text: `${name} joined the project as the contractor.`,
     };
     await saveChildren(ctx, invite.projectId, "events", [
       joined,

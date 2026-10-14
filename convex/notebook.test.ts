@@ -31,7 +31,7 @@ describe('private notebook transactions', () => {
     await bob.mutation(api.notebook.initialize, {});
     await alice.mutation(api.notebook.commit, { action: { type: 'profile', name: 'Alice', role: 'homeowner' } });
     expect((await alice.query(api.notebook.get, {}))?.name).toBe('Alice');
-    expect((await bob.query(api.notebook.get, {}))?.name).toBe('Maya');
+    expect((await bob.query(api.notebook.get, {}))?.name).toBe('');
     expect((await alice.query(api.notebook.get, {}))?.projects).toHaveLength(1);
     const [a, b] = [(await alice.query(api.notebook.get, {}))!.projects[0].id, (await bob.query(api.notebook.get, {}))!.projects[0].id];
     expect(a).toMatch(/^kitchen-[0-9a-f]{16}$/);
@@ -204,4 +204,18 @@ describe('shared projects', () => {
     expect(await page.text()).toContain(`reno://join/${token}`);
     expect((await t.fetch('/join/<script>', { method: 'GET' })).status).toBe(404);
   });
+
+  test('joining as a contractor switches the app to the contractor view', async () => {
+    const { alice, bob } = setup();
+    const projectId = await realProject(alice);
+    await bob.mutation(api.notebook.initialize, {});
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    await bob.mutation(api.invites.accept, { token });
+    expect((await bob.query(api.notebook.get, {}))!.role).toBe('contractor');
+    // Bob has no name yet, so the timeline uses a neutral label.
+    const p = (await alice.query(api.notebook.get, {}))!.projects.find(row => row.id === projectId)!;
+    expect(p.events[0].text).toBe('Your contractor joined the project as the contractor.');
+    expect(p.members?.find(m => m.role === 'contractor')?.name).toBe('Reno member');
+  });
 });
+

@@ -85,7 +85,7 @@ export async function displayName(ctx: QueryCtx, userId: string) {
     .query("notebooks")
     .withIndex("by_ownerId", (q) => q.eq("ownerId", userId))
     .unique();
-  return notebook?.value.name ?? "Reno member";
+  return notebook?.value.name || "Reno member";
 }
 const childRows = (
   ctx: QueryCtx,
@@ -357,6 +357,8 @@ export const initialize = mutation({
       return null;
     // Project IDs are global, so each notebook gets its own sample ID.
     const seed = initialState();
+    // The app asks for a first name right after sign-up; the sample keeps Maya.
+    seed.name = "";
     seed.projects = seed.projects.map((p) => ({
       ...p,
       id: `${p.id}-${randomId()}`,
