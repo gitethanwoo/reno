@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DateField } from "@/components/date-field";
+import { today } from "@/lib/date";
 import { router } from "expo-router";
 import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
@@ -18,7 +20,7 @@ export default function Payment() {
   const { project: p, commit } = useProject();
   const task = useTask();
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(today);
   const [method, setMethod] = useState("Bank transfer");
   const [note, setNote] = useState("");
   const [id] = useState(uid);
@@ -63,12 +65,11 @@ export default function Payment() {
         value={amount}
         onChangeText={setAmount}
       />
-      <Field
-        label="Date paid (YYYY-MM-DD)"
-        placeholder="2026-10-21"
+      <DateField
+        label="Date paid"
         value={date}
-        onChangeText={setDate}
-        maxLength={10}
+        onChange={setDate}
+        max={today()}
       />
       <Chips
         label="How did you pay?"
@@ -87,8 +88,8 @@ export default function Payment() {
         maxLength={200}
       />
       <Note>
-        This records a payment you already made. No money moves through
-        Reno, and it isn’t proof the contractor received it.
+        This records a payment you already made. No money moves through Reno,
+        and it isn’t proof the contractor received it.
       </Note>
       <ErrorNote error={task.error} />
     </Screen>

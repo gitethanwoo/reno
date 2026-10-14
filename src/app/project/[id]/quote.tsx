@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DateField } from "@/components/date-field";
+import { today } from "@/lib/date";
 import { router } from "expo-router";
 import { View } from "react-native";
 import { useProject } from "@/features/use-project";
@@ -54,9 +56,7 @@ export default function SendQuote() {
   const [deposit, setDeposit] = useState(
     String(previous?.depositPercent ?? 30),
   );
-  const [start, setStart] = useState(
-    previous?.start ?? new Date().toISOString().slice(0, 10),
-  );
+  const [start, setStart] = useState(previous?.start ?? today());
   const [days, setDays] = useState(
     previous ? String(previous.durationDays) : "",
   );
@@ -229,12 +229,11 @@ export default function SendQuote() {
           />
         </View>
       </View>
-      <Field
-        label="Start date (YYYY-MM-DD)"
-        placeholder="2026-10-21"
+      <DateField
+        label="Start date"
         value={start}
-        onChangeText={setStart}
-        maxLength={10}
+        onChange={setStart}
+        min={today()}
       />
       <Checkbox
         label="Cleanup and disposal included"
