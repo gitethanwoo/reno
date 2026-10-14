@@ -51,5 +51,7 @@ export default defineSchema({
     ownerId: v.string(),
     storageId: v.id("_storage"),
     name: v.string(),
-  }).index("by_storageId", ["storageId"]),
+  })
+    .index("by_storageId", ["storageId"])
+    .index("by_ownerId", ["ownerId"]),
 });

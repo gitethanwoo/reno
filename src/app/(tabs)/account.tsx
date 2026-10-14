@@ -3,7 +3,9 @@ import { useSessionMode } from "@/state/session";
 import { useState } from "react";
 import { useStore } from "@/state/store";
 import { Role } from "@/domain/model";
-import { View } from "react-native";
+import { Alert, View } from "react-native";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import {
   Button,
   Card,
@@ -23,6 +25,32 @@ export default function Account() {
   const [role, setRole] = useState<Role>(state.role);
   const task = useTask();
   const [saved, setSaved] = useState(false);
+  const removeAccount = useMutation(api.account.remove);
+  const deletion = useTask();
+  const confirmDelete = () =>
+    Alert.alert(
+      "Delete your account?",
+      "This permanently deletes your notebook and every project you started, for everyone on it. Projects you joined as a contractor stay with the homeowner. This can’t be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete account",
+          style: "destructive",
+          onPress: () =>
+            deletion.run(async () => {
+              // Deleting requires a fresh sign-in, so confirm with Face ID first.
+              const signIn = await authClient.signIn.passkey();
+              if (signIn?.error)
+                throw new Error(
+                  signIn.error.message ||
+                    "Confirm with Face ID to delete your account.",
+                );
+              await removeAccount({});
+              await authClient.signOut();
+            }),
+        },
+      ],
+    );
   return (
     <Screen keyboard>
       <Title>Account</Title>
@@ -84,6 +112,17 @@ export default function Account() {
           }
         />
       </Card>
+      {!preview && (
+        <View style={{ gap: 8 }}>
+          <Button
+            title="Delete account"
+            variant="quiet"
+            busy={deletion.busy}
+            onPress={confirmDelete}
+          />
+          <ErrorNote error={deletion.error} />
+        </View>
+      )}
       <Copy tone="muted" style={{ fontSize: 13, textAlign: "center" }}>
         Reno · Early access 0.1
       </Copy>

@@ -34,6 +34,8 @@ export function createAuthOptions(
     secret: settings.secret,
     trustedOrigins: [siteUrl, convexUrl, "reno://"],
     database: authComponent.adapter(ctx),
+    // Account deletion (App Store 5.1.1(v)); app data is removed by account.remove.
+    user: { deleteUser: { enabled: true } },
     plugins: [
       anonymous(),
       passkey({

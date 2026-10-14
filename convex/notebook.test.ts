@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { api } from './_generated/api';
 import schema from './schema';
 import { remaining, total } from '../src/domain/model';
+import { deleteAppData } from './account';
 
 const modules = import.meta.glob('./**/*.ts');
 function setup() {
@@ -219,3 +220,31 @@ describe('shared projects', () => {
   });
 });
 
+describe('account deletion', () => {
+  test('removes the homeowner\'s projects for everyone and only the contractor\'s membership', async () => {
+    const { t, alice, bob } = setup();
+    const projectId = await realProject(alice);
+    await bob.mutation(api.notebook.initialize, {});
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    await bob.mutation(api.invites.accept, { token });
+    await bob.mutation(api.notebook.commit, { action: quote(projectId, 'q1') });
+
+    // The contractor leaves: the homeowner keeps the project and its record.
+    await bob.run(async ctx => deleteAppData(ctx, (await ctx.auth.getUserIdentity())!.tokenIdentifier));
+    expect(await bob.query(api.notebook.get, {})).toBeNull();
+    const kept = (await alice.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!;
+    expect(kept.members?.map(m => m.role)).toEqual(['homeowner']);
+    expect(kept.quotes).toHaveLength(1);
+
+    // The homeowner leaves: nothing of theirs remains.
+    await alice.run(async ctx => deleteAppData(ctx, (await ctx.auth.getUserIdentity())!.tokenIdentifier));
+    expect(await alice.query(api.notebook.get, {})).toBeNull();
+    const left = await t.run(async ctx => ({
+      projects: await ctx.db.query('projects').collect(),
+      members: await ctx.db.query('members').collect(),
+      events: await ctx.db.query('events').collect(),
+      invites: await ctx.db.query('invites').collect(),
+    }));
+    expect(left).toEqual({ projects: [], members: [], events: [], invites: [] });
+  });
+});
