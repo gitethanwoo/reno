@@ -241,6 +241,51 @@ describe('shared projects', () => {
     expect(full.photos.some(p => p.name === 'extra.png')).toBe(false);
   });
 
+  test('punch photos must be the attaching member\'s own uploads', async () => {
+    const { alice, bob } = setup();
+    const projectId = await realProject(alice);
+    await bob.mutation(api.notebook.initialize, {});
+    await bob.mutation(api.notebook.commit, { action: { type: 'profile', name: 'Bob', role: 'homeowner' } });
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    await bob.mutation(api.invites.accept, { token });
+    const png = () => Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1kAAAAASUVORK5CYII='), c => c.charCodeAt(0)).buffer;
+    const upload = (user: User, name: string) => user.action(api.files.upload, { data: png(), contentType: 'image/png', name });
+    const crack = await upload(alice, 'crack.png');
+    const closeUp = await upload(alice, 'close-up.png');
+    const fixed = await upload(bob, 'fixed.png');
+    const add = (photo: typeof crack) => ({ type: 'punch-add' as const, projectId, id: 'grout', title: 'Regrout by the tub', note: '', photo, at: '' });
+    const edit = (photo: typeof crack) => ({ type: 'punch-edit' as const, projectId, id: 'grout', note: '', photo, at: '' });
+    const review = (status: 'review' | 'resolved', photo: typeof crack) => ({ type: 'punch-review' as const, projectId, id: 'grout', status, note: 'Regrouted and sealed.', photo, at: '' });
+    const item = async (user: User) => (await user.query(api.notebook.get, {}))!.projects.find(p => p.id === projectId)!.punch.find(i => i.id === 'grout');
+
+    // The homeowner's "what's wrong" photo, on add and on edit.
+    await expect(alice.mutation(api.notebook.commit, { action: add(fixed) })).rejects.toThrow('does not belong');
+    expect(await item(alice)).toBeUndefined();
+    await alice.mutation(api.notebook.commit, { action: add(crack) });
+    await expect(alice.mutation(api.notebook.commit, { action: edit(fixed) })).rejects.toThrow('does not belong');
+    await expect(bob.mutation(api.notebook.commit, { action: edit(fixed) })).rejects.toThrow('homeowner');
+    await alice.mutation(api.notebook.commit, { action: edit(closeUp) });
+    const added = await item(bob);
+    expect(added?.photo?.name).toBe('close-up.png');
+    expect(added?.photo?.uri.length).toBeGreaterThan(0);
+
+    // The contractor's proof of the fix.
+    await expect(bob.mutation(api.notebook.commit, { action: review('review', crack) })).rejects.toThrow('does not belong');
+    await expect(bob.mutation(api.notebook.commit, { action: review('review', { ...fixed, id: 'not-a-storage-id' }) })).rejects.toThrow('Upload this photo');
+    expect((await item(alice))?.status).toBe('open');
+    await bob.mutation(api.notebook.commit, { action: review('review', fixed) });
+    const submitted = await item(alice);
+    expect(submitted?.status).toBe('review');
+    expect(submitted?.fixPhoto?.name).toBe('fixed.png');
+    expect(submitted?.fixPhoto?.uri.length).toBeGreaterThan(0);
+    expect(submitted?.photo?.name).toBe('close-up.png');
+
+    // Only a submitted fix carries a photo.
+    await expect(alice.mutation(api.notebook.commit, { action: review('resolved', crack) })).rejects.toThrow('Only a submitted fix');
+    await alice.mutation(api.notebook.commit, { action: { type: 'punch-review', projectId, id: 'grout', status: 'resolved', note: '', at: '' } });
+    expect((await item(bob))?.fixPhoto?.name).toBe('fixed.png');
+  });
+
   test('sample projects cannot be shared', async () => {
     const { alice } = setup();
     const projectId = await sample(alice);

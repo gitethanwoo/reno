@@ -70,6 +70,7 @@ export type Action =
       projectId: string;
       id: string;
       note: string;
+      photo?: Photo;
       at: string;
     }
   | {
@@ -78,6 +79,8 @@ export type Action =
       id: string;
       status: "review" | "resolved" | "open";
       note: string;
+      /** Proof of the fix; only when sending it for review. */
+      photo?: Photo;
       at: string;
     }
   | { type: "complete"; projectId: string; at: string }
@@ -395,7 +398,14 @@ export function reduce(state: AppState, action: Action): AppState {
           },
         ],
         events: [
-          event("punch", "Added punch item: " + action.title.trim(), action.id),
+          {
+            ...event(
+              "punch",
+              "Added punch item: " + action.title.trim(),
+              action.id,
+            ),
+            photo: action.photo,
+          },
           ...p.events,
         ],
       };
@@ -404,20 +414,31 @@ export function reduce(state: AppState, action: Action): AppState {
       const item = p.punch.find((i) => i.id === action.id);
       if (!item) throw new Error("This item could not be found.");
       const note = action.note.trim();
-      if (note === item.note) return state;
+      const photo =
+        action.photo && action.photo.id !== item.photo?.id
+          ? action.photo
+          : undefined;
+      if (note === item.note && !photo) return state;
       if (item.status !== "open")
         throw new Error(
           "Your contractor has already sent a fix. Reopen the item to add more.",
         );
       next = {
         ...p,
-        punch: p.punch.map((i) => (i.id === item.id ? { ...i, note } : i)),
+        punch: p.punch.map((i) =>
+          i.id === item.id ? { ...i, note, photo: photo ?? i.photo } : i,
+        ),
         events: [
-          event(
-            "punch",
-            "Added detail to " + item.title + (note ? ": " + note : "."),
-            "punch-" + item.id + "-edit-" + action.at,
-          ),
+          {
+            ...event(
+              "punch",
+              note !== item.note
+                ? "Added detail to " + item.title + (note ? ": " + note : ".")
+                : "Added a photo to " + item.title + ".",
+              "punch-" + item.id + "-edit-" + action.at,
+            ),
+            photo,
+          },
           ...p.events,
         ],
       };
@@ -518,6 +539,8 @@ export function reduce(state: AppState, action: Action): AppState {
       const item = p.punch.find((i) => i.id === action.id);
       if (!item) throw new Error("This item could not be found.");
       if (item.status === action.status) return state;
+      if (action.photo && action.status !== "review")
+        throw new Error("Only a submitted fix can include a photo.");
       if (action.status === "review") {
         requireRole(role, "contractor");
         if (item.status !== "open" || !action.note.trim())
@@ -539,21 +562,27 @@ export function reduce(state: AppState, action: Action): AppState {
                 ...i,
                 status: action.status,
                 resolution: action.note.trim() || i.resolution,
+                // Each submitted fix brings its own proof, or none.
+                fixPhoto:
+                  action.status === "review" ? action.photo : i.fixPhoto,
               }
             : i,
         ),
         events: [
-          event(
-            "punch",
-            (action.status === "review"
-              ? "Submitted a fix for "
-              : action.status === "resolved"
-                ? "Accepted the fix for "
-                : "Reopened ") +
-              item.title +
-              (action.note.trim() ? ". " + action.note.trim() : "."),
-            "punch-" + item.id + "-" + action.at,
-          ),
+          {
+            ...event(
+              "punch",
+              (action.status === "review"
+                ? "Submitted a fix for "
+                : action.status === "resolved"
+                  ? "Accepted the fix for "
+                  : "Reopened ") +
+                item.title +
+                (action.note.trim() ? ". " + action.note.trim() : "."),
+              "punch-" + item.id + "-" + action.at,
+            ),
+            photo: action.photo,
+          },
           ...p.events,
         ],
       };

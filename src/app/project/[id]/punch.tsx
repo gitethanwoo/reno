@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 import { useDiscardGuard } from "@/lib/discard";
 import { useProject } from "@/features/use-project";
+import { Photo } from "@/domain/model";
+import { PhotoViewer, type GalleryPhoto } from "@/components/photo-gallery";
+import { colors } from "@/components/theme";
 import {
   Badge,
   Button,
@@ -15,16 +19,19 @@ import {
   Screen,
   useTask,
 } from "@/components/ui";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 export default function Punch() {
-  const { project: p, params, role, commit } = useProject();
+  const { project: p, params, role, commit, addPhotos } = useProject();
   const task = useTask();
   const item = p?.punch.find((i) => i.id === params.itemId);
   const [note, setNote] = useState("");
   // Null until the homeowner edits, so the field shows the saved detail.
   const [detail, setDetail] = useState<string | null>(null);
+  // The contractor's proof, sent with the fix.
+  const [fixPhoto, setFixPhoto] = useState<Photo>();
+  const [viewing, setViewing] = useState<number | null>(null);
   const edited = !!item && detail !== null && detail.trim() !== item.note;
-  const allowLeave = useDiscardGuard(edited || !!note.trim());
+  const allowLeave = useDiscardGuard(edited || !!note.trim() || !!fixPhoto);
   if (!p)
     return (
       <Screen error={task.error}>
@@ -40,6 +47,7 @@ export default function Punch() {
         id: item.id,
         status,
         note,
+        photo: status === "review" ? fixPhoto : undefined,
         at: new Date().toISOString(),
       });
       allowLeave();
@@ -63,17 +71,26 @@ export default function Punch() {
   // Until the contractor responds, the homeowner can add detail.
   const canEdit = !closed && homeowner && item.status === "open";
   const acting = !closed && (canReview || canReopen || canSubmit);
-  const saveDetail = () =>
-    task.run(async () => {
-      await commit({
-        type: "punch-edit",
-        projectId: p.id,
-        id: item.id,
-        note: detail ?? item.note,
-        at: new Date().toISOString(),
-      });
-      setDetail(null);
-    });
+  const saveDetail = (photo?: Photo) =>
+    commit({
+      type: "punch-edit",
+      projectId: p.id,
+      id: item.id,
+      note: detail ?? item.note,
+      photo,
+      at: new Date().toISOString(),
+    }).then(() => setDetail(null));
+  const photos: (GalleryPhoto & { label: string })[] = [
+    item.photo && { ...item.photo, label: "The problem" },
+    item.fixPhoto && { ...item.fixPhoto, label: "The fix" },
+  ]
+    .filter((photo) => !!photo)
+    .map((photo) => ({
+      id: photo.id,
+      source: photo.uri,
+      name: photo.label + " · " + item.title,
+      label: photo.label,
+    }));
   return (
     <Screen error={task.error} keyboard>
       <View style={{ gap: 10 }}>
@@ -100,7 +117,53 @@ export default function Punch() {
         />
       )}
       {canEdit && edited && (
-        <Button title="Save detail" busy={task.busy} onPress={saveDetail} />
+        <Button
+          title="Save detail"
+          busy={task.busy}
+          onPress={() => task.run(() => saveDetail())}
+        />
+      )}
+      {photos.length > 0 && (
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          {photos.map((photo, i) => (
+            <Pressable
+              key={photo.id}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={photo.name}
+              onPress={() => setViewing(i)}
+              style={{ flex: 1, gap: 6 }}
+            >
+              <Image
+                source={photo.source}
+                recyclingKey={photo.id}
+                contentFit="cover"
+                transition={150}
+                style={{
+                  height: photos.length > 1 ? 160 : 210,
+                  borderRadius: 12,
+                  backgroundColor: colors.sage,
+                }}
+              />
+              <Copy tone="muted" style={{ fontSize: 13 }}>
+                {photo.label}
+              </Copy>
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {canEdit && (
+        <Button
+          title={item.photo ? "Replace photo" : "Add a photo"}
+          icon="camera"
+          variant="secondary"
+          disabled={task.busy}
+          onPress={() =>
+            task.run(async () => {
+              const [picked] = await addPhotos(1);
+              if (picked) await saveDetail(picked);
+            })
+          }
+        />
       )}
       {item.resolution && (
         <Card>
@@ -126,6 +189,30 @@ export default function Punch() {
               : "What still needs attention?"
           }
           maxLength={1000}
+        />
+      )}
+      {!closed && canSubmit && fixPhoto && (
+        <Image
+          source={fixPhoto.uri}
+          accessibilityLabel="Photo of the fix"
+          contentFit="cover"
+          style={{ height: 210, width: "100%", borderRadius: 12 }}
+        />
+      )}
+      {!closed && canSubmit && (
+        <Button
+          title={
+            fixPhoto ? "Choose a different photo" : "Add a photo of the fix"
+          }
+          icon="camera"
+          variant="secondary"
+          disabled={task.busy}
+          onPress={() =>
+            task.run(async () => {
+              const [picked] = await addPhotos(1);
+              if (picked) setFixPhoto(picked);
+            })
+          }
         />
       )}
       {!closed && canReview && (
@@ -158,6 +245,11 @@ export default function Punch() {
             : "Waiting for the homeowner to review your fix. Only they can close the item."}
         </Note>
       )}
+      <PhotoViewer
+        photos={photos}
+        index={viewing}
+        onClose={() => setViewing(null)}
+      />
     </Screen>
   );
 }
