@@ -36,7 +36,6 @@ export default function Propose() {
   return (
     <Screen
       error={task.error}
-      keyboard
       footer={
         <Button
           title="Send for approval"

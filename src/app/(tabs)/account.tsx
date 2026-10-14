@@ -75,7 +75,7 @@ export default function Account() {
       ],
     );
   return (
-    <Screen keyboard>
+    <Screen>
       <Title>Account</Title>
       <Card>
         <Field

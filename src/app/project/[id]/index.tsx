@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Stack, router } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
+import type { KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
 import { useProject } from "@/features/use-project";
 import {
   Badge,
@@ -64,7 +65,7 @@ export default function ProjectDetail() {
   // scrolled up under it.
   const [titleBottom, setTitleBottom] = useState(0);
   const [titled, setTitled] = useState(false);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   // The thread keeps its newest message in view, like Messages, until the
   // person scrolls back through it.
   const stuck = useRef(false);
@@ -203,7 +204,6 @@ export default function ProjectDetail() {
   return (
     <Screen
       scrollRef={scroll}
-      keyboard={record}
       scroll={{
         keyboardDismissMode: record ? "on-drag" : undefined,
         onScroll: (e) =>

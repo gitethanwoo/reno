@@ -26,7 +26,6 @@ export function NameStep() {
       ]}
     >
       <Screen
-        keyboard
         footer={
           <Button
             title="Continue"

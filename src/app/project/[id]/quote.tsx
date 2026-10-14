@@ -153,7 +153,6 @@ export default function SendQuote() {
   return (
     <Screen
       error={task.error}
-      keyboard
       footer={
         <Button
           title={previous ? "Send revised quote" : "Send quote"}

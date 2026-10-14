@@ -1,5 +1,6 @@
 import { SessionProvider, useSessionMode } from "@/state/session";
 import { PaperProvider, MD3LightTheme } from "react-native-paper";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -162,12 +163,14 @@ export default function RootLayout() {
         },
       }}
     >
-      <SessionProvider>
-        <StoreProvider>
-          <StatusBar style="dark" />
-          <Routes />
-        </StoreProvider>
-      </SessionProvider>
+      <KeyboardProvider>
+        <SessionProvider>
+          <StoreProvider>
+            <StatusBar style="dark" />
+            <Routes />
+          </StoreProvider>
+        </SessionProvider>
+      </KeyboardProvider>
     </PaperProvider>
   );
 }

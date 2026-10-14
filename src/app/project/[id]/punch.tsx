@@ -92,7 +92,7 @@ export default function Punch() {
       label: photo.label,
     }));
   return (
-    <Screen error={task.error} keyboard>
+    <Screen error={task.error}>
       <View style={{ gap: 10 }}>
         <Badge warm={item.status !== "resolved"}>
           {item.status === "review"

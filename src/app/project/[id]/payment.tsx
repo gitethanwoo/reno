@@ -65,7 +65,6 @@ export default function Payment() {
   return (
     <Screen
       error={task.error}
-      keyboard
       footer={
         <Button
           title="Save payment record"

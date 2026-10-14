@@ -3,6 +3,7 @@ import { useDiscardGuard } from "@/lib/discard";
 import { Stack, router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { useKeyboardState } from "react-native-keyboard-controller";
 import { useStore, uid } from "@/state/store";
 import { Draft, validateDraft } from "@/domain/model";
 import {
@@ -28,6 +29,7 @@ export default function NewProject() {
   const [draft, setDraft] = useState<Draft>(state.draft);
   const [step, setStep] = useState(0);
   const task = useTask();
+  const keyboardUp = useKeyboardState((k) => k.isVisible);
   const [id] = useState(uid);
   const scopeField = useRef<FieldHandle>(null);
   const zipField = useRef<FieldHandle>(null);
@@ -46,7 +48,6 @@ export default function NewProject() {
   return (
     <Screen
       error={task.error}
-      keyboard
       footer={
         step > 0 && (
           <View style={{ gap: 8 }}>
@@ -77,18 +78,22 @@ export default function NewProject() {
                       })
               }
             />
-            <Button
-              title="Save draft & close"
-              variant="quiet"
-              disabled={task.busy}
-              onPress={() =>
-                task.run(async () => {
-                  await save();
-                  allowLeave();
-                  router.back();
-                })
-              }
-            />
+            {/* Only the main action rides on the keyboard, so the field
+                being typed in keeps the room. Cancel still offers the draft. */}
+            {!keyboardUp && (
+              <Button
+                title="Save draft & close"
+                variant="quiet"
+                disabled={task.busy}
+                onPress={() =>
+                  task.run(async () => {
+                    await save();
+                    allowLeave();
+                    router.back();
+                  })
+                }
+              />
+            )}
           </View>
         )
       }

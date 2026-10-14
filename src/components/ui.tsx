@@ -2,7 +2,6 @@ import React, { useId, useImperativeHandle, useRef, useState } from "react";
 import {
   InputAccessoryView,
   Keyboard,
-  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   ScrollViewProps,
@@ -15,6 +14,11 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  KeyboardAwareScrollView,
+  KeyboardStickyView,
+  type KeyboardAwareScrollViewRef,
+} from "react-native-keyboard-controller";
 import * as Haptics from "expo-haptics";
 import {
   Button as PaperButton,
@@ -111,7 +115,6 @@ export function Wordmark() {
 export function Screen({
   children,
   footer,
-  keyboard = false,
   padded = true,
   error = null,
   scrollRef,
@@ -121,9 +124,8 @@ export function Screen({
   footer?: React.ReactNode;
   /** Shown next to the footer's buttons, where the person is looking when they tap. */
   error?: string | null;
-  keyboard?: boolean;
   padded?: boolean;
-  scrollRef?: React.Ref<ScrollView>;
+  scrollRef?: React.Ref<KeyboardAwareScrollViewRef>;
   /** Scroll events, for screens that follow their own position (a thread, a collapsing title). */
   scroll?: Pick<
     ScrollViewProps,
@@ -135,73 +137,70 @@ export function Screen({
   >;
 }) {
   const inset = useSafeAreaInsets();
-  // KeyboardAvoidingView compares its own frame with the keyboard's screen
-  // position, so it needs to know where it sits on screen: under a header,
-  // inside a modal sheet, or full screen. Measured, not guessed.
-  const frame = useRef<View>(null);
-  const [top, setTop] = useState(0);
+  // The footer floats over the bottom of the scroll view and rides up with
+  // the keyboard, so the content needs its height as bottom padding and the
+  // focused field has to stay above it.
+  const [footerHeight, setFooterHeight] = useState(0);
   return (
-    <View
-      ref={frame}
-      style={s.flex}
-      onLayout={() => frame.current?.measureInWindow((_x, y) => setTop(y))}
-    >
-      <KeyboardAvoidingView
-        style={s.flex}
-        behavior={
-          keyboard && process.env.EXPO_OS === "ios" ? "padding" : undefined
-        }
-        // With the keyboard up, the footer's home-indicator padding sits
-        // behind the keyboard instead of floating as a gap above it.
-        keyboardVerticalOffset={
-          top - (footer ? Math.max(inset.bottom - 18, 0) : 0)
-        }
+    <View style={s.flex}>
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        {...scroll}
+        // Keeps the field being typed in clear of the keyboard and the footer.
+        bottomOffset={footerHeight + 16}
+        // A spacer rather than insets, so the thread hears about the keyboard
+        // through onContentSizeChange and can keep its newest message in view.
+        mode="layout"
+        keyboardDismissMode={scroll?.keyboardDismissMode ?? "interactive"}
+        scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: padded ? 24 : 0,
+          paddingTop: 18,
+          paddingBottom: footer
+            ? footerHeight + 24
+            : Math.max(inset.bottom, 24) + 24,
+          gap: 24,
+          maxWidth: 660,
+          width: "100%",
+          alignSelf: "center",
+        }}
       >
-        <ScrollView
-          ref={scrollRef}
-          {...scroll}
-          // Not "interactive": KeyboardAvoidingView doesn't follow the drag, so the footer would lag behind the keyboard.
-          keyboardDismissMode={scroll?.keyboardDismissMode ?? "on-drag"}
-          scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            paddingHorizontal: padded ? 24 : 0,
-            paddingTop: 18,
-            paddingBottom: footer ? 24 : Math.max(inset.bottom, 24) + 24,
-            gap: 24,
-            maxWidth: 660,
-            width: "100%",
-            alignSelf: "center",
+        {children}
+        {!footer && <ErrorNote error={error} />}
+      </KeyboardAwareScrollView>
+      {footer && (
+        <KeyboardStickyView
+          // With the keyboard up, the home-indicator padding tucks behind it
+          // instead of floating as a gap above it.
+          offset={{ opened: Math.max(inset.bottom - 18, 0) }}
+          onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: 20,
+            paddingBottom: Math.max(inset.bottom, 18),
+            backgroundColor: colors.paper,
+            borderTopColor: colors.line,
+            borderTopWidth: 1,
           }}
         >
-          {children}
-          {!footer && <ErrorNote error={error} />}
-        </ScrollView>
-        {footer && (
           <View
             style={{
-              padding: 20,
-              paddingBottom: Math.max(inset.bottom, 18),
-              backgroundColor: colors.paper,
-              borderTopColor: colors.line,
-              borderTopWidth: 1,
+              maxWidth: 612,
+              width: "100%",
+              alignSelf: "center",
+              gap: 12,
             }}
           >
-            <View
-              style={{
-                maxWidth: 612,
-                width: "100%",
-                alignSelf: "center",
-                gap: 12,
-              }}
-            >
-              <ErrorNote error={error} />
-              {footer}
-            </View>
+            <ErrorNote error={error} />
+            {footer}
           </View>
-        )}
-      </KeyboardAvoidingView>
+        </KeyboardStickyView>
+      )}
     </View>
   );
 }
