@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -133,57 +133,76 @@ export function Screen({
   >;
 }) {
   const inset = useSafeAreaInsets();
+  // KeyboardAvoidingView compares its own frame with the keyboard's screen
+  // position, so it needs to know where it sits on screen: under a header,
+  // inside a modal sheet, or full screen. Measured, not guessed.
+  const frame = useRef<View>(null);
+  const [top, setTop] = useState(0);
   return (
-    <KeyboardAvoidingView
+    <View
+      ref={frame}
       style={s.flex}
-      behavior={
-        keyboard && process.env.EXPO_OS === "ios" ? "padding" : undefined
-      }
-      keyboardVerticalOffset={100}
+      onLayout={() => frame.current?.measureInWindow((_x, y) => setTop(y))}
     >
-      <ScrollView
-        ref={scrollRef}
-        {...scroll}
-        scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingHorizontal: padded ? 24 : 0,
-          paddingTop: 18,
-          paddingBottom: footer ? 24 : Math.max(inset.bottom, 24) + 24,
-          gap: 24,
-          maxWidth: 660,
-          width: "100%",
-          alignSelf: "center",
-        }}
+      <KeyboardAvoidingView
+        style={s.flex}
+        behavior={
+          keyboard && process.env.EXPO_OS === "ios" ? "padding" : undefined
+        }
+        // With the keyboard up, the footer's home-indicator padding sits
+        // behind the keyboard instead of floating as a gap above it.
+        keyboardVerticalOffset={
+          top - (footer ? Math.max(inset.bottom - 18, 0) : 0)
+        }
       >
-        {children}
-        {!footer && <ErrorNote error={error} />}
-      </ScrollView>
-      {footer && (
-        <View
-          style={{
-            padding: 20,
-            paddingBottom: Math.max(inset.bottom, 18),
-            backgroundColor: colors.paper,
-            borderTopColor: colors.line,
-            borderTopWidth: 1,
+        <ScrollView
+          ref={scrollRef}
+          {...scroll}
+          keyboardDismissMode={
+            scroll?.keyboardDismissMode ??
+            (process.env.EXPO_OS === "ios" ? "interactive" : "on-drag")
+          }
+          scrollEventThrottle={scroll?.onScroll ? 16 : undefined}
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingHorizontal: padded ? 24 : 0,
+            paddingTop: 18,
+            paddingBottom: footer ? 24 : Math.max(inset.bottom, 24) + 24,
+            gap: 24,
+            maxWidth: 660,
+            width: "100%",
+            alignSelf: "center",
           }}
         >
+          {children}
+          {!footer && <ErrorNote error={error} />}
+        </ScrollView>
+        {footer && (
           <View
             style={{
-              maxWidth: 612,
-              width: "100%",
-              alignSelf: "center",
-              gap: 12,
+              padding: 20,
+              paddingBottom: Math.max(inset.bottom, 18),
+              backgroundColor: colors.paper,
+              borderTopColor: colors.line,
+              borderTopWidth: 1,
             }}
           >
-            <ErrorNote error={error} />
-            {footer}
+            <View
+              style={{
+                maxWidth: 612,
+                width: "100%",
+                alignSelf: "center",
+                gap: 12,
+              }}
+            >
+              <ErrorNote error={error} />
+              {footer}
+            </View>
           </View>
-        </View>
-      )}
-    </KeyboardAvoidingView>
+        )}
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 export function Button({
