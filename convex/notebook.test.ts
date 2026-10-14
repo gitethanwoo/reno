@@ -1,12 +1,16 @@
 /// <reference types="vite/client" />
 import { convexTest } from 'convex-test';
-import { describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { api } from './_generated/api';
 import schema from './schema';
 import { remaining, total } from '../src/domain/model';
 import { deleteAppData } from './account';
 
 const modules = import.meta.glob('./**/*.ts');
+// Commits schedule push sends; fake timers keep them from running (and
+// calling the network) in the middle of these tests. push.test.ts covers them.
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => vi.useRealTimers());
 function setup() {
   const t = convexTest(schema, modules);
   const alice = t.withIdentity({ subject: 'alice', issuer: 'https://reno.test' });

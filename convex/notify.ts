@@ -147,5 +147,12 @@ export function commitNotice(
       );
     case "complete":
       return notice(name + " marked the project complete.", path(id));
+    case "add-photos": {
+      const added = p.photos.length - was.photos.length;
+      return notice(
+        name + " added " + (added === 1 ? "a photo" : added + " photos") + ".",
+        path(id),
+      );
+    }
   }
 }

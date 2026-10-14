@@ -323,4 +323,34 @@ describe("push notifications", () => {
     );
     expect(left).toEqual([good]);
   });
+
+  test("added photos notify the other member", async () => {
+    vi.useFakeTimers();
+    const { t, bob, ids } = await shared();
+    const png = Uint8Array.from(
+      atob(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1kAAAAASUVORK5CYII=",
+      ),
+      (c) => c.charCodeAt(0),
+    ).buffer;
+    const photo = await bob.action(api.files.upload, {
+      data: png,
+      contentType: "image/png",
+      name: "site.png",
+    });
+    await bob.mutation(api.notebook.commit, {
+      action: {
+        type: "add-photos",
+        projectId: "bath-1",
+        photos: [photo],
+        at: "",
+      },
+    });
+    const last = (await scheduled(t)).at(-1);
+    expect([last.userIds, last.body, last.url]).toEqual([
+      [ids.alice],
+      "Bob added a photo.",
+      "/project/bath-1",
+    ]);
+  });
 });
