@@ -166,6 +166,13 @@ export const action = v.union(
     at: v.string(),
   }),
   v.object({
+    type: v.literal("punch-edit"),
+    projectId: v.string(),
+    id: v.string(),
+    note: v.string(),
+    at: v.string(),
+  }),
+  v.object({
     type: v.literal("punch-review"),
     projectId: v.string(),
     id: v.string(),

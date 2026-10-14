@@ -66,6 +66,13 @@ export type Action =
       at: string;
     }
   | {
+      type: "punch-edit";
+      projectId: string;
+      id: string;
+      note: string;
+      at: string;
+    }
+  | {
       type: "punch-review";
       projectId: string;
       id: string;
@@ -389,6 +396,28 @@ export function reduce(state: AppState, action: Action): AppState {
         ],
         events: [
           event("punch", "Added punch item: " + action.title.trim(), action.id),
+          ...p.events,
+        ],
+      };
+    } else if (action.type === "punch-edit") {
+      requireRole(role, "homeowner");
+      const item = p.punch.find((i) => i.id === action.id);
+      if (!item) throw new Error("This item could not be found.");
+      const note = action.note.trim();
+      if (note === item.note) return state;
+      if (item.status !== "open")
+        throw new Error(
+          "Your contractor has already sent a fix. Reopen the item to add more.",
+        );
+      next = {
+        ...p,
+        punch: p.punch.map((i) => (i.id === item.id ? { ...i, note } : i)),
+        events: [
+          event(
+            "punch",
+            "Added detail to " + item.title + (note ? ": " + note : "."),
+            "punch-" + item.id + "-edit-" + action.at,
+          ),
           ...p.events,
         ],
       };

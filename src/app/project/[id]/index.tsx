@@ -42,6 +42,7 @@ import {
 import { exportProject } from "@/lib/export-project";
 import { useInvite } from "@/features/use-invite";
 import { Icon } from "@/components/icon";
+import { PunchComposer } from "@/components/punch-composer";
 
 export default function ProjectDetail() {
   const { project: p, state, params, role, commit, addPhotos } = useProject();
@@ -467,7 +468,13 @@ export default function ProjectDetail() {
               </View>
             </View>
           ) : null}
-          {p.punch.length ? (
+          {!p.punch.length && (
+            <Empty
+              title="Nothing on the list yet."
+              text="Add anything that needs attention before the job is finished."
+            />
+          )}
+          {(p.punch.length > 0 || (homeowner && !complete)) && (
             <Card style={{ gap: 0, paddingVertical: 4 }}>
               {p.punch.map((item, i) => (
                 <View
@@ -495,20 +502,10 @@ export default function ProjectDetail() {
                   />
                 </View>
               ))}
+              {homeowner && !complete && (
+                <PunchComposer projectId={p.id} first={!p.punch.length} />
+              )}
             </Card>
-          ) : (
-            <Empty
-              title="Nothing on the list yet."
-              text="Add anything that needs attention before the job is finished."
-            />
-          )}
-          {homeowner && !complete && (
-            <Button
-              title="Add punch item"
-              icon="plus"
-              variant={p.punch.length ? "secondary" : "primary"}
-              onPress={() => go("punch")}
-            />
           )}
         </>
       )}

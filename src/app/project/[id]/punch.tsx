@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
+import { useDiscardGuard } from "@/lib/discard";
 import { useProject } from "@/features/use-project";
-import { uid } from "@/state/store";
 import {
   Badge,
   Button,
@@ -13,7 +13,6 @@ import {
   Heading,
   Note,
   Screen,
-  Title,
   useTask,
 } from "@/components/ui";
 import { View } from "react-native";
@@ -21,9 +20,11 @@ export default function Punch() {
   const { project: p, params, role, commit } = useProject();
   const task = useTask();
   const item = p?.punch.find((i) => i.id === params.itemId);
-  const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
-  const [id] = useState(uid);
+  // Null until the homeowner edits, so the field shows the saved detail.
+  const [detail, setDetail] = useState<string | null>(null);
+  const edited = !!item && detail !== null && detail.trim() !== item.note;
+  const allowLeave = useDiscardGuard(edited || !!note.trim());
   if (!p)
     return (
       <Screen error={task.error}>
@@ -41,50 +42,15 @@ export default function Punch() {
         note,
         at: new Date().toISOString(),
       });
+      allowLeave();
       router.back();
     });
   if (!item)
     return (
-      <Screen
-        error={task.error}
-        keyboard
-        footer={
-          <Button
-            title="Add to punch list"
-            busy={task.busy}
-            onPress={() =>
-              task.run(async () => {
-                await commit({
-                  type: "punch-add",
-                  projectId: p.id,
-                  id,
-                  title,
-                  note,
-                  at: new Date().toISOString(),
-                });
-                router.back();
-              })
-            }
-          />
-        }
-      >
-        <Title sub="Your contractor submits a fix, then you decide whether it’s resolved.">
-          Add a punch item
-        </Title>
-        <Field
-          label="What needs attention?"
-          placeholder="e.g. Finish the window edge"
-          value={title}
-          onChangeText={setTitle}
-          maxLength={100}
-        />
-        <Field
-          label="A little more detail"
-          multiline
-          value={note}
-          onChangeText={setNote}
-          placeholder="Where is it? What should be different?"
-          maxLength={1000}
+      <Screen error={task.error}>
+        <Empty
+          title="This item could not be found."
+          text="Return to the project’s punch list."
         />
       </Screen>
     );
@@ -94,7 +60,20 @@ export default function Punch() {
   const canReview = homeowner && item.status === "review";
   const canReopen = homeowner && item.status === "resolved";
   const canSubmit = !homeowner && item.status === "open";
+  // Until the contractor responds, the homeowner can add detail.
+  const canEdit = !closed && homeowner && item.status === "open";
   const acting = !closed && (canReview || canReopen || canSubmit);
+  const saveDetail = () =>
+    task.run(async () => {
+      await commit({
+        type: "punch-edit",
+        projectId: p.id,
+        id: item.id,
+        note: detail ?? item.note,
+        at: new Date().toISOString(),
+      });
+      setDetail(null);
+    });
   return (
     <Screen error={task.error} keyboard>
       <View style={{ gap: 10 }}>
@@ -108,8 +87,21 @@ export default function Punch() {
               : "Open"}
         </Badge>
         <Heading>{item.title}</Heading>
-        <Copy>{item.note}</Copy>
+        {!canEdit && !!item.note && <Copy>{item.note}</Copy>}
       </View>
+      {canEdit && (
+        <Field
+          label="Detail"
+          multiline
+          value={detail ?? item.note}
+          onChangeText={setDetail}
+          placeholder="Where is it? What should be different?"
+          maxLength={1000}
+        />
+      )}
+      {canEdit && edited && (
+        <Button title="Save detail" busy={task.busy} onPress={saveDetail} />
+      )}
       {item.resolution && (
         <Card>
           <Eyebrow>Latest note</Eyebrow>

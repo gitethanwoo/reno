@@ -119,6 +119,14 @@ export function commitNotice(
         name + " added a punch-list item: " + clip(action.title, 60) + ".",
         path(id, "/punch", { itemId: action.id }),
       );
+    case "punch-edit": {
+      const item = p.punch.find((i) => i.id === action.id);
+      if (!item) return null;
+      return notice(
+        name + " added detail to " + clip(item.title, 60) + ".",
+        path(id, "/punch", { itemId: item.id }),
+      );
+    }
     case "punch-review": {
       const item = p.punch.find((i) => i.id === action.id);
       if (!item) return null;
