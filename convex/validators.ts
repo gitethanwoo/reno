@@ -183,6 +183,12 @@ export const action = v.union(
     at: v.string(),
   }),
   v.object({
+    type: v.literal("add-photos"),
+    projectId: v.string(),
+    photos: v.array(photo),
+    at: v.string(),
+  }),
+  v.object({
     type: v.literal("send-quote"),
     projectId: v.string(),
     id: v.string(),

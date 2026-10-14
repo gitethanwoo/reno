@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { Image } from "expo-image";
 import { useProject } from "@/features/use-project";
 import { remaining, money, total } from "@/domain/model";
-import { kitchen } from "@/components/project-card";
+import {
+  PhotoStrip,
+  PhotoViewer,
+  galleryPhotos,
+} from "@/components/photo-gallery";
 import { View } from "react-native";
 import {
   Button,
@@ -24,6 +27,7 @@ export default function Complete() {
   const { project: p, commit } = useProject();
   const task = useTask();
   const [confirmed, setConfirmed] = useState(false);
+  const [viewing, setViewing] = useState<number | null>(null);
   if (!p)
     return (
       <Screen error={task.error}>
@@ -83,11 +87,14 @@ export default function Complete() {
         {complete ? "Project complete" : "Finish the project"}
       </Title>
       {complete && (
-        <Image
-          source={p.photos[0]?.uri ?? kitchen}
-          contentFit="cover"
-          style={{ width: "100%", height: 220, borderRadius: 14 }}
-        />
+        <>
+          <PhotoStrip photos={galleryPhotos(p)} onOpen={setViewing} />
+          <PhotoViewer
+            photos={galleryPhotos(p)}
+            index={viewing}
+            onClose={() => setViewing(null)}
+          />
+        </>
       )}
       <Card style={{ gap: 6 }}>
         <Check done={!open}>

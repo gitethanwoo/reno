@@ -22,8 +22,9 @@ import {
 } from "@/components/ui";
 import { colors, fonts } from "@/components/theme";
 import { Icon } from "@/components/icon";
+const MAX_DRAFT_PHOTOS = 8;
 export default function NewProject() {
-  const { state, commit, addPhoto } = useStore();
+  const { state, commit, addPhotos } = useStore();
   const [draft, setDraft] = useState<Draft>(state.draft);
   const [step, setStep] = useState(0);
   const task = useTask();
@@ -212,43 +213,66 @@ export default function NewProject() {
           <Title sub="Photos of the space as it is now, plus any look you love. They make quotes more accurate.">
             Add photos
           </Title>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            {draft.photos.map((photo) => (
-              <View key={photo.id} style={{ width: "47%", gap: 4 }}>
-                <Image
-                  source={photo.uri}
-                  style={{ width: "100%", height: 150, borderRadius: 12 }}
-                  contentFit="cover"
-                  accessibilityLabel={photo.name}
-                />
-                <Button
-                  title="Remove photo"
-                  variant="quiet"
-                  onPress={() =>
-                    setDraft((d) => ({
-                      ...d,
-                      photos: d.photos.filter((p) => p.id !== photo.id),
-                    }))
-                  }
-                />
-              </View>
-            ))}
-          </View>
+          {draft.photos.length > 0 && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {draft.photos.map((photo, i) => (
+                <View key={photo.id} style={{ width: "31.5%", aspectRatio: 1 }}>
+                  <Image
+                    source={photo.uri}
+                    style={{ width: "100%", height: "100%", borderRadius: 10 }}
+                    contentFit="cover"
+                    accessibilityLabel={photo.name}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={"Remove photo " + (i + 1)}
+                    hitSlop={8}
+                    onPress={() =>
+                      setDraft((d) => ({
+                        ...d,
+                        photos: d.photos.filter((p) => p.id !== photo.id),
+                      }))
+                    }
+                    style={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 13,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "rgba(23, 51, 47, 0.78)",
+                      borderWidth: 1.5,
+                      borderColor: colors.white,
+                    }}
+                  >
+                    <Icon name="close" size={14} color={colors.white} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
           <Button
-            title="Add a photo"
+            title={draft.photos.length ? "Add more photos" : "Add photos"}
             icon="camera"
             variant="secondary"
-            disabled={draft.photos.length >= 8}
+            disabled={draft.photos.length >= MAX_DRAFT_PHOTOS}
             onPress={() =>
               task.run(async () => {
-                const photo = await addPhoto();
-                if (photo)
-                  setDraft((d) => ({ ...d, photos: [...d.photos, photo] }));
+                const photos = await addPhotos(
+                  MAX_DRAFT_PHOTOS - draft.photos.length,
+                );
+                if (photos.length)
+                  setDraft((d) => ({
+                    ...d,
+                    photos: [...d.photos, ...photos].slice(0, MAX_DRAFT_PHOTOS),
+                  }));
               })
             }
           />
           <Copy tone="muted" style={{ fontSize: 13 }}>
-            Up to 8 photos. You can also add them later.
+            Up to 8 photos now. You can add more from the project page later.
           </Copy>
         </>
       )}

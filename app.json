@@ -49,7 +49,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow Reno to add photos to your project notebook.",
-          "cameraPermission": false,
+          "cameraPermission": "Allow Reno to take photos of your project.",
           "microphonePermission": false
         }
       ]

@@ -9,6 +9,8 @@ export const photoSchema = z.object({
   name: z.string(),
 });
 export type Photo = z.infer<typeof photoSchema>;
+/** Most photos one project can hold. */
+export const projectPhotoLimit = 20;
 export const draftSchema = z.object({
   title: z.string(),
   type: z.string(),

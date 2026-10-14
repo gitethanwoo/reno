@@ -21,7 +21,11 @@ import {
   plural,
   useTask,
 } from "@/components/ui";
-import { kitchen } from "@/components/project-card";
+import {
+  PhotoStrip,
+  PhotoViewer,
+  galleryPhotos,
+} from "@/components/photo-gallery";
 import { colors, fonts } from "@/components/theme";
 import {
   contractorOf,
@@ -29,6 +33,7 @@ import {
   latestQuote,
   money,
   paid,
+  projectPhotoLimit,
   remaining,
   statusLabel,
   total,
@@ -38,10 +43,12 @@ import { expiresIn } from "@/lib/invite";
 import { Icon } from "@/components/icon";
 
 export default function ProjectDetail() {
-  const { project: p, state, params, role } = useProject();
+  const { project: p, state, params, role, commit, addPhotos } = useProject();
   const [tab, setTab] = useState(params.tab ?? "overview");
   const [now] = useState(() => Date.now());
   const task = useTask();
+  const photoTask = useTask();
+  const [viewing, setViewing] = useState<number | null>(null);
   if (!p)
     return (
       <Screen>
@@ -87,6 +94,19 @@ export default function ProjectDetail() {
   const pending = p.changes.filter((c) => c.status === "pending");
   const openPunch = p.punch.filter((i) => i.status !== "resolved");
   const pendingCents = pending.reduce((sum, c) => sum + c.cents, 0);
+  const photos = galleryPhotos(p);
+  const photosLeft = projectPhotoLimit - p.photos.length;
+  const addProjectPhotos = () =>
+    photoTask.run(async () => {
+      const picked = await addPhotos(photosLeft);
+      if (picked.length)
+        await commit({
+          type: "add-photos",
+          projectId: p.id,
+          photos: picked,
+          at: new Date().toISOString(),
+        });
+    });
   return (
     <Screen>
       <Stack.Screen options={{ title: "" }} />
@@ -112,14 +132,20 @@ export default function ProjectDetail() {
       />
       {tab === "overview" && (
         <>
-          {(p.isSample || p.photos[0]) && (
-            <Image
-              source={p.photos[0]?.uri ?? kitchen}
-              style={{ width: "100%", height: 195, borderRadius: 14 }}
-              contentFit="cover"
-              accessibilityLabel="Project inspiration"
-            />
-          )}
+          <PhotoStrip
+            photos={photos}
+            onOpen={setViewing}
+            add={
+              complete
+                ? undefined
+                : {
+                    onPress: addProjectPhotos,
+                    busy: photoTask.busy,
+                    left: photosLeft,
+                  }
+            }
+          />
+          <ErrorNote error={photoTask.error} />
           {pending.map((c) => (
             <Card key={c.id} style={{ backgroundColor: colors.amber }}>
               <Eyebrow>
@@ -508,6 +534,11 @@ export default function ProjectDetail() {
         </>
       )}
       <ErrorNote error={task.error} />
+      <PhotoViewer
+        photos={photos}
+        index={viewing}
+        onClose={() => setViewing(null)}
+      />
     </Screen>
   );
 }

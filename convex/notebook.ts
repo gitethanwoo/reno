@@ -8,6 +8,7 @@ import {
   type Member,
   type Photo,
   type Project,
+  projectPhotoLimit,
   type Role,
 } from "../src/domain/model";
 import { reduce, type Action } from "../src/domain/reducer";
@@ -25,7 +26,7 @@ export const limits = {
   changes: 100,
   payments: 100,
   punch: 100,
-  photos: 20,
+  photos: projectPhotoLimit,
   guides: 100,
 } as const;
 type Children = "events" | "changes" | "payments" | "punch";
@@ -390,6 +391,15 @@ export const commit = mutation({
             action.draft.photos.map((photo) => ownedPhoto(ctx, userId, photo)),
           ),
         },
+      };
+    if (action.type === "add-photos")
+      action = {
+        ...action,
+        photos: await Promise.all(
+          bounded(action.photos, limits.photos, "project photos").map((photo) =>
+            ownedPhoto(ctx, userId, photo),
+          ),
+        ),
       };
     if ("photo" in action && action.photo)
       action = {

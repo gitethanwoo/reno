@@ -7,7 +7,7 @@ import { useProject } from "@/features/use-project";
 import { uid } from "@/state/store";
 import { Button, Empty, Field, Title, Screen, useTask } from "@/components/ui";
 export default function Update() {
-  const { project: p, commit, addPhoto, params } = useProject();
+  const { project: p, commit, addPhotos, params } = useProject();
   const task = useTask();
   const [text, setText] = useState(params.text ?? "");
   const [photo, setPhoto] = useState<Photo>();
@@ -71,8 +71,8 @@ export default function Update() {
         variant="secondary"
         onPress={() =>
           task.run(async () => {
-            const p = await addPhoto();
-            if (p) setPhoto(p);
+            const [picked] = await addPhotos(1);
+            if (picked) setPhoto(picked);
           })
         }
       />

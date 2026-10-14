@@ -8,6 +8,7 @@ import {
   addDays,
   emptyDraft,
   money,
+  projectPhotoLimit,
   quoteTotal,
   remaining,
   roleIn,
@@ -73,6 +74,7 @@ export type Action =
       at: string;
     }
   | { type: "complete"; projectId: string; at: string }
+  | { type: "add-photos"; projectId: string; photos: Photo[]; at: string }
   | {
       type: "send-quote";
       projectId: string;
@@ -193,7 +195,12 @@ export function reduce(state: AppState, action: Action): AppState {
             ? p.punch.some((i) => i.id === action.id)
             : action.type === "update"
               ? p.events.some((i) => i.id === action.id)
-              : false;
+              : action.type === "add-photos"
+                ? action.photos.length > 0 &&
+                  action.photos.every((n) =>
+                    p.photos.some((i) => i.id === n.id),
+                  )
+                : false;
     if (duplicate) return state;
     if (p.status === "completed")
       throw new Error(
@@ -326,6 +333,40 @@ export function reduce(state: AppState, action: Action): AppState {
           {
             ...event("update", action.text.trim(), action.id),
             photo: action.photo,
+          },
+          ...p.events,
+        ],
+      };
+    } else if (action.type === "add-photos") {
+      // Either side can document the site.
+      const photos = action.photos.filter(
+        (n, i, all) =>
+          all.findIndex((o) => o.id === n.id) === i &&
+          !p.photos.some((o) => o.id === n.id),
+      );
+      if (!photos.length) throw new Error("Choose at least one photo.");
+      if (p.photos.length + photos.length > projectPhotoLimit)
+        throw new Error(
+          "A project holds up to " +
+            projectPhotoLimit +
+            " photos. " +
+            (p.photos.length < projectPhotoLimit
+              ? "Choose " + (projectPhotoLimit - p.photos.length) + " or fewer."
+              : "This one is full."),
+        );
+      next = {
+        ...p,
+        photos: [...p.photos, ...photos],
+        events: [
+          {
+            ...event(
+              "update",
+              photos.length === 1
+                ? "Added a photo."
+                : "Added " + photos.length + " photos.",
+              "photos-" + photos[0].id,
+            ),
+            photo: photos[0],
           },
           ...p.events,
         ],
