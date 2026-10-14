@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { useMutation, useQuery, useAction, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSessionMode } from "./session";
-import { pickPhoto, photoUpload } from "@/lib/photos";
+import { pickPhotos, photoUpload } from "@/lib/photos";
 
 const KEY = "reno-project-notebook-v1";
 type Store = {
@@ -15,7 +15,8 @@ type Store = {
   loadError: string | null;
   commit: (action: Action) => Promise<void>;
   reload: () => void;
-  addPhoto: () => Promise<Photo | null>;
+  /** Pick up to `max` photos (camera or library), uploaded when signed in. */
+  addPhotos: (max: number) => Promise<Photo[]>;
 };
 const Context = createContext<Store | null>(null);
 function LocalStoreProvider({ children }: { children: React.ReactNode }) {
@@ -72,7 +73,7 @@ function LocalStoreProvider({ children }: { children: React.ReactNode }) {
           setReady(false);
           setAttempt((n) => n + 1);
         },
-        addPhoto: pickPhoto,
+        addPhotos: pickPhotos,
       }}
     >
       {children}
@@ -103,10 +104,11 @@ function CloudStoreProvider({ children }: { children: React.ReactNode }) {
       );
     }
   }, [result, initialize, attempt]);
-  async function addPhoto() {
-    const photo = await pickPhoto();
-    if (!photo) return null;
-    return upload(await photoUpload(photo));
+  async function addPhotos(max: number) {
+    const photos = await pickPhotos(max);
+    return Promise.all(
+      photos.map(async (photo) => upload(await photoUpload(photo))),
+    );
   }
   return (
     <Context
@@ -121,7 +123,7 @@ function CloudStoreProvider({ children }: { children: React.ReactNode }) {
           setLoadError(null);
           setAttempt((n) => n + 1);
         },
-        addPhoto,
+        addPhotos,
       }}
     >
       {children}
