@@ -212,11 +212,7 @@ export function Button({
           ? ({ color, size }) => <Icon name={icon} color={color} size={size} />
           : undefined
       }
-      onPress={() => {
-        if (process.env.EXPO_OS === "ios")
-          void Haptics.selectionAsync().catch(() => {});
-        onPress();
-      }}
+      onPress={onPress}
       contentStyle={{ minHeight: 54, flexDirection: "row-reverse" }}
       labelStyle={{ fontFamily: fonts.bold, fontSize: 16 }}
       style={{ borderRadius: 12, borderColor: colors.line }}
@@ -379,7 +375,13 @@ export function Segments<T extends string>({
   return (
     <SegmentedButtons
       value={value}
-      onValueChange={(v) => onChange(v as T)}
+      onValueChange={(v) => {
+        const picked = options.find((option) => option.value === v);
+        if (!picked || picked.value === value) return;
+        if (process.env.EXPO_OS === "ios")
+          void Haptics.selectionAsync().catch(() => {});
+        onChange(picked.value);
+      }}
       buttons={options.map((option) => ({
         ...option,
         style: { minHeight: 48 },
