@@ -195,6 +195,19 @@ describe('shared projects', () => {
     await expect(alice.mutation(api.invites.create, { projectId })).rejects.toThrow('already has a contractor');
   });
 
+  test('a signed-out welcome shows who invited them, only while the link works', async () => {
+    const { t, alice, bob } = setup();
+    const projectId = await realProject(alice);
+    await bob.mutation(api.notebook.initialize, {});
+    const { token } = await alice.mutation(api.invites.create, { projectId });
+    expect(await t.query(api.invites.welcome, { token })).toEqual({ title: 'Primary bath tile', homeowner: 'Alice' });
+    expect(await t.query(api.invites.welcome, { token: 'nope' })).toBeNull();
+    // The full preview still needs an account.
+    await expect(t.query(api.invites.preview, { token })).rejects.toThrow('Sign in');
+    await bob.mutation(api.invites.accept, { token });
+    expect(await t.query(api.invites.welcome, { token })).toBeNull();
+  });
+
   test('either member can add project photos, only their own, up to the cap', async () => {
     const { t, alice, bob } = setup();
     const projectId = await realProject(alice);

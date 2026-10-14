@@ -149,6 +149,37 @@ export const preview = query({
   },
 });
 
+// The welcome screen shows who sent a link before the person has an account.
+// Signing in anonymously is open to anyone, so requiring auth here would
+// protect nothing; the 128-bit token is the secret. Only what the invite
+// screen would show anyway is returned, and nothing for a link that can't
+// be used.
+export const welcome = query({
+  args: { token: v.string() },
+  returns: v.union(
+    v.object({ title: v.string(), homeowner: v.string() }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const invite = await ctx.db
+      .query("invites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!invite || invite.acceptedBy) return null;
+    const people = await projectMembers(ctx, invite.projectId);
+    if (people.some((m) => m.role === "contractor")) return null;
+    const project = await ctx.db
+      .query("projects")
+      .withIndex("by_projectId", (q) => q.eq("projectId", invite.projectId))
+      .unique();
+    if (!project) return null;
+    return {
+      title: project.value.title,
+      homeowner: await displayName(ctx, invite.createdBy),
+    };
+  },
+});
+
 export const accept = mutation({
   args: { token: v.string() },
   returns: v.object({ projectId: v.string() }),
